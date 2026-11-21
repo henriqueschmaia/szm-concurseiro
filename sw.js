@@ -1,5 +1,5 @@
-/* Service worker do SZM Concurseiro — deixa o app abrir sem internet */
-const CACHE = "szm-v1";
+﻿/* Service worker do SZM Concurseiro â€” offline + atualizaÃ§Ã£o automÃ¡tica */
+const CACHE = "szm-v5";
 const SHELL = [
   "./",
   "./index.html",
@@ -13,7 +13,11 @@ const SHELL = [
 self.addEventListener("install", (evento) => {
   evento.waitUntil(
     caches.open(CACHE)
-      .then((cache) => cache.addAll(SHELL))
+      .then((cache) => Promise.all(
+        SHELL.map((url) => fetch(url, { cache: "reload" })
+          .then((res) => { if (res && res.ok) return cache.put(url, res); })
+          .catch(() => null))
+      ))
       .then(() => self.skipWaiting())
   );
 });
@@ -34,21 +38,40 @@ self.addEventListener("fetch", (evento) => {
 
   const url = new URL(req.url);
 
-  // requisições para outros domínios (API da IA) vão direto para a rede
+  // API da IA e outros domÃ­nios: sempre rede
   if (url.origin !== self.location.origin) return;
 
+  // O documento principal: rede primeiro, para a versÃ£o nova aparecer assim que vocÃª atualizar
+  const ehDocumento = req.mode === "navigate" || req.destination === "document";
+  if (ehDocumento) {
+    evento.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copia = res.clone();
+          caches.open(CACHE).then((c) => c.put("./index.html", copia));
+          return res;
+        })
+        .catch(() => caches.match("./index.html").then((r) => r || caches.match("./")))
+    );
+    return;
+  }
+
+  // Demais arquivos: responde do cache e atualiza em segundo plano
   evento.respondWith(
     caches.match(req).then((emCache) => {
-      if (emCache) return emCache;
-      return fetch(req)
-        .then((resposta) => {
-          if (resposta && resposta.status === 200) {
-            const copia = resposta.clone();
-            caches.open(CACHE).then((cache) => cache.put(req, copia));
+      const daRede = fetch(req)
+        .then((res) => {
+          if (res && res.status === 200) {
+            const copia = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copia));
           }
-          return resposta;
+          return res;
         })
-        .catch(() => caches.match("./index.html"));
+        .catch(() => emCache);
+      return emCache || daRede;
     })
   );
 });
+
+
+

@@ -21,7 +21,8 @@
   header{background:linear-gradient(135deg,#0A2240 0%,#123A66 60%,#1B5E86 100%);
          color:#fff;padding:10px 14px;position:sticky;top:0;z-index:20;
          box-shadow:0 3px 12px rgba(10,34,64,.25)}
-  .marca{display:flex;align-items:center;gap:10px}
+  header{position:relative}
+  .marca{display:flex;align-items:center;gap:10px;padding-right:46px}
   .marca .logo{background:#fff;border-radius:10px;padding:4px 7px;display:flex;align-items:center}
   .marca .logo img{height:30px;display:block}
   .marca h1{margin:0;font-size:14px;letter-spacing:.2px;line-height:1.15}
@@ -78,6 +79,65 @@
   .dia b{font-size:11.5px;color:var(--azul)}
   .dia div{font-size:11.5px;margin-top:2px;color:#333}
   canvas{width:100%;display:block}
+  .subnav{display:flex;gap:5px;background:#fff;border:1px solid var(--borda);border-radius:99px;
+          padding:4px;margin-bottom:10px;box-shadow:var(--sombra);position:sticky;top:76px;z-index:15}
+  .subnav button{flex:1;border:0;background:none;padding:8px 4px;border-radius:99px;
+                 font-size:11px;font-weight:700;color:#7A8AA0}
+  .subnav button.on{background:linear-gradient(135deg,#0A2240,#14325C);color:#fff;
+                    box-shadow:0 3px 8px rgba(10,34,64,.25)}
+  .bloco{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #EFF3F8}
+  .bloco:last-child{border-bottom:0}
+  .bloco .txt{flex:1;font-size:12.5px;line-height:1.35}
+  .bloco .txt small{color:#7A8AA0;font-size:10.5px;display:block}
+  .bloco .chk{width:32px;height:32px;border-radius:50%;border:2px solid #D7E2EC;background:#fff;
+              font-size:14px;color:#B8C6D6;flex:0 0 auto}
+  .bloco.feito .chk{background:linear-gradient(135deg,#2E8B57,#1F6B3A);border-color:transparent;color:#fff}
+  .bloco.feito .txt{opacity:.5;text-decoration:line-through}
+  .status{border-radius:12px;padding:10px 12px;font-size:12px;font-weight:600;margin-bottom:9px}
+  .status.ok{background:#E8F5EC;color:#1F6B3A;border-left:4px solid #2E8B57}
+  .status.err{background:#FDECEC;color:#9C2727;border-left:4px solid #C0392B}
+  .status.info{background:#E9F6F8;color:#15707E;border-left:4px solid var(--teal)}
+  .sino{position:absolute;right:12px;top:50%;transform:translateY(-50%);border:0;
+        background:rgba(255,255,255,.14);width:40px;height:40px;border-radius:50%;
+        font-size:17px;color:#fff;display:grid;place-items:center}
+  .sino:active{background:rgba(255,255,255,.28)}
+  .sino .badge{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;border-radius:99px;
+        background:linear-gradient(135deg,#E2B33C,#C2A24E);color:#3A2E00;font-size:10px;font-weight:800;
+        display:grid;place-items:center;padding:0 4px;font-style:normal}
+  .overlay{position:fixed;inset:0;background:rgba(10,34,64,.55);z-index:90;display:flex;
+           align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
+  .sheet{background:#fff;width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:16px 14px 22px;
+         max-height:82vh;overflow:auto;animation:sobe .25s ease}
+  @keyframes sobe{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
+  .sheet-topo{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .sheet-topo h3{margin:0;font-size:15px;color:var(--azul)}
+  .sheet-topo button{border:0;background:#F1F5F9;width:32px;height:32px;border-radius:50%;font-size:14px}
+  .aviso-item{display:flex;gap:10px;align-items:flex-start;padding:11px;border-radius:14px;
+              background:var(--cinza);margin-bottom:8px;border-left:4px solid var(--borda)}
+  .aviso-item.erro{border-left-color:#C0392B;background:#FDF1F0}
+  .aviso-item.warn{border-left-color:var(--ouro);background:#FFFAEE}
+  .aviso-item.info{border-left-color:var(--teal);background:#EEF9FB}
+  .aviso-item.ok{border-left-color:#2E8B57;background:#EEF8F1}
+  .aviso-item .ico{font-size:16px;line-height:1.2}
+  .aviso-item .corpo{flex:1}
+  .aviso-item .corpo b{display:block;font-size:12.5px;color:var(--azul);margin-bottom:2px}
+  .aviso-item .corpo span{font-size:11px;color:#5B6B80;line-height:1.4}
+  .aviso-item .ir{border:0;background:var(--azul2);color:#fff;border-radius:99px;
+                  padding:7px 12px;font-size:11px;font-weight:700;align-self:center}
+  .toasts{position:fixed;left:0;right:0;bottom:88px;display:flex;flex-direction:column;
+          align-items:center;gap:7px;z-index:80;pointer-events:none;padding:0 12px}
+  .toast{background:#0A2240;color:#fff;padding:11px 17px;border-radius:99px;font-size:12.5px;
+         font-weight:700;box-shadow:0 10px 26px rgba(10,34,64,.35);opacity:0;
+         transform:translateY(14px) scale(.96);transition:opacity .22s,transform .22s;max-width:100%}
+  .toast.mostra{opacity:1;transform:none}
+  .toast.ok{background:linear-gradient(135deg,#23824F,#1F6B3A)}
+  .toast.err{background:linear-gradient(135deg,#B53333,#9C2727)}
+  .toast.info{background:linear-gradient(135deg,#30A6B5,#1B7C8C)}
+  .saldo{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #EFF3F8;font-size:12px}
+  .saldo:last-child{border-bottom:0}
+  .saldo .nome{flex:1}
+  .saldo .barra2{width:72px;height:7px;background:#E9EFF6;border-radius:99px;overflow:hidden}
+  .saldo .barra2 i{display:block;height:100%;background:var(--teal)}
   .anel{--p:0;width:108px;height:108px;border-radius:50%;
         background:conic-gradient(var(--teal) calc(var(--p)*1%), #E4EDF5 0);
         display:grid;place-items:center;margin:12px auto 6px;
@@ -108,8 +168,21 @@
       <p id="cabecalho">—</p>
     </div>
   </div>
+  <button class="sino" onclick="abrirAvisos()" aria-label="Avisos">
+    🔔<i class="badge" id="sinoBadge" style="display:none">0</i>
+  </button>
   <div class="faixa-ouro"></div>
 </header>
+
+<div id="painelAvisos" class="overlay oculto" onclick="fecharAvisos(event)">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-topo">
+      <h3>Avisos de hoje</h3>
+      <button onclick="fecharAvisos()">✕</button>
+    </div>
+    <div id="listaAvisos"></div>
+  </div>
+</div>
 
 <main>
   <!-- PAINEL -->
@@ -179,94 +252,134 @@
 
   <!-- PLANO -->
   <section id="tab-plano" class="oculto">
-    <div class="card">
-      <h2>1. Sua rotina</h2>
-      <div class="aviso">A IA precisa saber quanto tempo você tem de verdade. Preencha e salve.</div>
-      <div class="linha"><label>Dormir (h)</label><input type="number" id="r-dormir" min="4" max="10" step="0.5" value="8"></div>
-      <div class="linha"><label>Trabalho (horário)</label>
-        <input type="time" id="r-trab-ini" value="12:30"> <input type="time" id="r-trab-fim" value="16:30"></div>
-      <div class="mini">Dias de trabalho:</div>
-      <div class="dias" id="r-trab-dias"></div>
-      <div class="linha"><label>Hora extra (min/dia)</label><input type="number" id="r-extra" min="0" value="40"></div>
-      <div class="linha"><label>Faculdade</label>
-        <input type="time" id="r-facul-ini" value="19:00"> <input type="time" id="r-facul-fim" value="22:00"></div>
-      <div class="mini">Dias de faculdade:</div>
-      <div class="dias" id="r-facul-dias"></div>
-      <div class="linha"><label>Deslocamento (min/dia)</label><input type="number" id="r-desloc" min="0" value="40"></div>
-      <div class="linha"><label>Treino (min/sessão)</label><input type="number" id="r-treino-dur" min="0" value="70"></div>
-      <div class="mini">Dias de treino:</div>
-      <div class="dias" id="r-treino-dias"></div>
-      <div class="mini">Dias de folga (sem estudo):</div>
-      <div class="dias" id="r-folgas"></div>
-      <div class="linha"><label>Outras atividades</label><input type="text" id="r-outras" placeholder="ex.: inglês terça 20h" style="flex:1"></div>
-      <div class="linha"><label>Férias do trabalho (de/até)</label>
-        <input type="date" id="r-ferias-ini"> <input type="date" id="r-ferias-fim"></div>
-      <button class="btn" onclick="salvarRotina()">Salvar rotina</button>
-      <div class="mini" id="r-msg"></div>
-      <div id="r-tabela" style="margin-top:8px"></div>
+    <div class="subnav">
+      <button class="on" data-sub="hoje" onclick="subTab('hoje')">Hoje</button>
+      <button data-sub="semana" onclick="subTab('semana')">Semana</button>
+      <button data-sub="rotina" onclick="subTab('rotina')">Rotina</button>
+      <button data-sub="edital" onclick="subTab('edital')">Edital + IA</button>
     </div>
 
-    <div class="card">
-      <h2>2. Prova e período</h2>
-      <div class="linha"><label>Data da prova</label><input type="date" id="p-prova"></div>
-      <button class="btn sec mini" onclick="extrairProva()">Procurar no edital</button>
-      <div class="kpi" style="margin-top:8px"><span id="p-janela">—</span><span id="p-dias-lbl">—</span></div>
-      <div class="mini" id="p-msg2">Se a data já passou, o plano vira 180 dias a partir de hoje.</div>
+    <!-- HOJE -->
+    <div id="sub-hoje">
+      <div class="card">
+        <h2>Objetivos de hoje</h2>
+        <div id="statusPlano"></div>
+        <div id="hojeBlocos" class="mini">Nenhum plano ativo.</div>
+        <button class="btn sec mini" onclick="rebalancear()">Redistribuir o que falta</button>
+      </div>
+      <div class="card"><h2>Cumprido hoje</h2><div id="hojeFeito" class="mini">—</div></div>
+
     </div>
 
-    <div class="card">
-      <h2>3. Edital</h2>
-      <textarea id="edital" placeholder="Cole aqui o Anexo I ou anexe o arquivo..."></textarea>
-      <button class="btn sec" onclick="document.getElementById('arqEdital').click()">Anexar edital</button>
-      <input type="file" id="arqEdital" accept=".txt,.md,.csv,.pdf" class="oculto"
-             onchange="anexarEdital(this,'edital','edital-msg')">
-      <button class="btn" onclick="lerEdital()">Ler edital</button>
-      <div class="mini" id="edital-msg"></div>
+    <!-- SEMANA -->
+    <div id="sub-semana" class="oculto">
+      <div class="card">
+        <h2>Cronograma da semana</h2>
+        <div id="chipsPlanos2" class="chips"></div>
+        <div id="semana" class="mini">Nenhum plano ativo.</div>
+      </div>
+      <div class="card"><h2>Saldo por matéria</h2><div id="saldoMaterias" class="mini">—</div></div>
     </div>
 
-    <div class="card">
-      <h2>3b. Atualização do edital</h2>
-      <div class="aviso">Saiu retificação? Cole o edital novo aqui. O app compara com o atual, mostra o que mudou
-        e refaz o plano só com o que falta — mantendo o que você já cumpriu.</div>
-      <textarea id="editalNovo" placeholder="Cole aqui o edital atualizado ou anexe o arquivo..."></textarea>
-      <button class="btn sec" onclick="document.getElementById('arqEditalNovo').click()">Anexar edital novo</button>
-      <input type="file" id="arqEditalNovo" accept=".txt,.md,.csv,.pdf" class="oculto"
-             onchange="anexarEdital(this,'editalNovo','upd-msg')">
-      <button class="btn" onclick="compararEdital()">Comparar</button>
-      <div id="diff" class="mini"></div>
-      <button class="btn sec" id="btnAplicar" style="display:none" onclick="aplicarAtualizacao()">
-        Aplicar e recalcular plano</button>
-      <div class="mini" id="upd-msg"></div>
+    <!-- ROTINA -->
+    <div id="sub-rotina" class="oculto">
+      <div class="card">
+        <h2>Sua rotina</h2>
+        <div class="aviso">É daqui que saem suas horas livres. Salve sempre que mudar de horário.</div>
+        <div class="linha"><label>Dormir (h)</label><input type="number" id="r-dormir" min="4" max="10" step="0.5" value="8"></div>
+        <div class="linha"><label>Trabalho (horário)</label>
+          <input type="time" id="r-trab-ini" value="12:30"> <input type="time" id="r-trab-fim" value="16:30"></div>
+        <div class="mini">Dias de trabalho:</div>
+        <div class="dias" id="r-trab-dias"></div>
+        <div class="linha"><label>Hora extra (min/dia)</label><input type="number" id="r-extra" min="0" value="40"></div>
+        <div class="linha"><label>Faculdade</label>
+          <input type="time" id="r-facul-ini" value="19:00"> <input type="time" id="r-facul-fim" value="22:00"></div>
+        <div class="mini">Dias de faculdade:</div>
+        <div class="dias" id="r-facul-dias"></div>
+        <div class="linha"><label>Deslocamento (min/dia)</label><input type="number" id="r-desloc" min="0" value="40"></div>
+        <div class="linha"><label>Treino (min/sessão)</label><input type="number" id="r-treino-dur" min="0" value="70"></div>
+        <div class="mini">Dias de treino:</div>
+        <div class="dias" id="r-treino-dias"></div>
+        <div class="mini">Dias de folga (sem estudo):</div>
+        <div class="dias" id="r-folgas"></div>
+        <div class="linha"><label>Outras atividades</label><input type="text" id="r-outras" placeholder="ex.: inglês terça 20h" style="flex:1"></div>
+        <div class="linha"><label>Férias do trabalho</label>
+          <input type="date" id="r-ferias-ini"> <input type="date" id="r-ferias-fim"></div>
+        <button class="btn principal" onclick="salvarRotina()">Salvar rotina</button>
+        <div class="mini" id="r-msg"></div>
+        <div id="r-tabela" style="margin-top:8px"></div>
+      </div>
     </div>
 
-    <div class="card">
-      <h2>4. Gerar</h2>
-      <div class="linha"><label>Modelo</label><input type="text" id="apiModel" value="gemini-flash-lite-latest" style="flex:1"></div>
-      <div class="linha"><label>Chave Gemini</label><input type="password" id="apiKey" placeholder="cole a chave" style="flex:1"></div>
-      <button class="btn" onclick="salvarChave()">Salvar chave</button>
-      <button class="btn principal" onclick="gerarComIA()">Gerar com IA</button>
-      <button class="btn sec" onclick="novoPlanoRegras()">Gerar por regras</button>
-      <button class="btn sec" onclick="apagarChave()">Apagar chave</button>
-      <div class="mini" id="ia-msg"></div>
-    </div>
+    <!-- EDITAL + IA -->
+    <div id="sub-edital" class="oculto">
+      <div class="card">
+        <h2>Prova e período</h2>
+        <div class="linha"><label>Data da prova</label><input type="date" id="p-prova"></div>
+        <button class="btn sec mini" onclick="extrairProva()">Procurar no edital</button>
+        <div class="kpi" style="margin-top:8px"><span id="p-janela">—</span><span id="p-dias-lbl">—</span></div>
+        <div class="mini" id="p-msg2">Se a data já passou, o plano vira 180 dias a partir de hoje.</div>
+      </div>
 
-    <div class="card"><h2>Meus planos</h2><div id="listaPlanos" class="mini">Nenhum plano ainda.</div>
-      <button class="btn sec" onclick="document.getElementById('arqPlano').click()">Importar plano</button>
-      <input type="file" id="arqPlano" accept=".json" class="oculto" onchange="importarPlano(this)"></div>
+      <div class="card">
+        <h2>Edital</h2>
+        <textarea id="edital" placeholder="Cole aqui o Anexo I ou anexe o arquivo..."></textarea>
+        <button class="btn sec" onclick="document.getElementById('arqEdital').click()">Anexar edital</button>
+        <input type="file" id="arqEdital" accept=".txt,.md,.csv,.pdf" class="oculto"
+               onchange="anexarEdital(this,'edital','edital-msg')">
+        <button class="btn" onclick="lerEdital()">Ler edital</button>
+        <div class="mini" id="edital-msg"></div>
+      </div>
 
-    <div class="card"><h2>Disciplinas e pesos</h2><div id="pesos"></div></div>
-    <div class="card"><h2>Semana do plano ativo</h2><div id="semana" class="mini">—</div></div>
+      <div class="card">
+        <h2>Atualização do edital</h2>
+        <div class="aviso">Saiu retificação? Cole o edital novo. O app compara, mostra o que mudou e refaz o plano
+          só com o que falta.</div>
+        <textarea id="editalNovo" placeholder="Cole aqui o edital atualizado ou anexe..."></textarea>
+        <button class="btn sec" onclick="document.getElementById('arqEditalNovo').click()">Anexar edital novo</button>
+        <input type="file" id="arqEditalNovo" accept=".txt,.md,.csv,.pdf" class="oculto"
+               onchange="anexarEdital(this,'editalNovo','upd-msg')">
+        <button class="btn" onclick="compararEdital()">Comparar</button>
+        <div id="diff" class="mini"></div>
+        <button class="btn principal" id="btnAplicar" style="display:none" onclick="aplicarAtualizacao()">
+          Aplicar e recalcular</button>
+        <div class="mini" id="upd-msg"></div>
+      </div>
 
-    <div class="card">
-      <h2>Dados</h2>
-      <p class="mini" id="resumo-dados"></p>
-      <button class="btn" onclick="exportar()">Exportar tudo</button>
-      <button class="btn sec" onclick="document.getElementById('arq').click()">Importar</button>
-      <input type="file" id="arq" accept=".json" class="oculto" onchange="importar(this)">
-      <button class="btn sec" onclick="limpar()">Apagar tudo</button>
+      <div class="card">
+        <h2>Gerar plano</h2>
+        <div class="linha"><label>Modelo</label><input type="text" id="apiModel" value="gemini-flash-lite-latest" style="flex:1"></div>
+        <div class="linha"><label>Chave Gemini</label><input type="password" id="apiKey" placeholder="cole a chave" style="flex:1"></div>
+        <button class="btn" onclick="salvarChave()">Salvar chave</button>
+        <button class="btn principal" onclick="gerarComIA()">Gerar com IA</button>
+        <button class="btn sec" onclick="novoPlanoRegras()">Gerar por regras</button>
+        <button class="btn sec" onclick="apagarChave()">Apagar chave</button>
+        <div class="mini" id="ia-msg"></div>
+      </div>
+
+      <div class="card">
+        <h2>Meus planos</h2>
+        <div id="listaPlanos" class="mini">Nenhum plano ainda.</div>
+        <button class="btn sec" onclick="document.getElementById('arqPlano').click()">Importar plano</button>
+        <input type="file" id="arqPlano" accept=".json" class="oculto" onchange="importarPlano(this)">
+      </div>
+
+      <div class="card"><h2>Disciplinas e pesos</h2><div id="pesos"></div></div>
+
+      <div class="card">
+        <h2>Dados</h2>
+        <p class="mini" id="resumo-dados"></p>
+        <button class="btn" onclick="exportar()">Exportar tudo</button>
+        <button class="btn sec" onclick="document.getElementById('arq').click()">Importar</button>
+        <input type="file" id="arq" accept=".json" class="oculto" onchange="importar(this)">
+        <button class="btn sec" onclick="limpar()">Apagar tudo</button>
+      </div>
     </div>
   </section>
+
 </main>
+
+<div class="toasts" id="toasts"></div>
 
 <nav>
   <button class="on" data-tab="painel" onclick="tab('painel')"><span>🏠</span>Painel</button>
@@ -418,7 +531,8 @@ function encerrar(m){
   if(seg<30){ if(seg>0&&confirm("Menos de 30 segundos. Descartar?")) resetar(m); return; }
   const min=Math.max(1,Math.round(seg/60));
   db.sessoes.push({data:hoje(),materia:m,minutos:min,quando:new Date().toISOString()});
-  salvar(); resetar(m); atualizarTudo(); salvarCronometro(); alert("+"+min+" min em "+m);
+  salvar(); resetar(m); atualizarTudo(); salvarCronometro();
+  toast("Sessão registrada: +"+min+" min de "+m, "ok");
 }
 function resetar(m){ estado[m]={seg:0,rodando:false,marca:0}; ativoNome=null; salvarCronometro(); renderMaterias(); }
 
@@ -503,6 +617,7 @@ function lancarQuestoes(){
   if(acertos<0||acertos>total){ msg.textContent="Acertos inválido."; return; }
   db.questoes.push({data,materia,assunto,total,acertos}); salvar();
   document.getElementById("q-total").value=""; document.getElementById("q-acertos").value="";
+  toast("Questões registradas: "+acertos+"/"+total, "ok");
   msg.textContent=`Registrado: ${assunto} — ${acertos}/${total}.`;
   renderHistorico(); renderPrioridades(); desenharTudo();
 }
@@ -915,8 +1030,9 @@ function novoPlanoRegras(){
   const plano={id:uid(),nome:"Plano "+(db.planos.length+1)+" (regras)",inicio:j.inicio,fim:j.fim,dias:j.dias,
     horasSemana:horasSemana(j.inicio),ciclo,origem:"regras",criado:new Date().toISOString()};
   db.planos.push(plano); db.ativoId=plano.id; salvar();
-  renderListaPlanos(); renderChips(); renderSemana(); desenharTudo();
+  renderListaPlanos(); renderChips(); renderSemana(); renderHoje(); desenharTudo();
   document.getElementById("ia-msg").textContent="Plano criado e ativado.";
+  toast("Plano criado e ativado", "ok");
 }
 function renderSemana(){
   const p=planoAtivo(), box=document.getElementById("semana");
@@ -1279,6 +1395,264 @@ function resumo(){
     `${db.sessoes.length} sessões · ${(min/60).toFixed(1).replace(".",",")} h · ${db.questoes.length} baterias · ${db.planos.length} plano(s)${aviso}.`;
 }
 
+/* ============================================================ AVISOS DO DIA */
+function gerarAvisos(){
+  const out = [];
+  const hj = hoje(), w = dow(hj);
+  const p = planoAtivo();
+
+  if(!db.rotina.configurada)
+    out.push({n:"warn", ico:"⚙️", t:"Configure sua rotina",
+      d:"Sem ela, as horas livres do dia ficam no chute.",
+      b:"Configurar", f:()=>{ tab('plano'); subTab('rotina'); }});
+
+  if(!p)
+    out.push({n:"warn", ico:"📅", t:"Nenhum plano ativo",
+      d:"Gere um plano para ter objetivos diários.",
+      b:"Gerar", f:()=>{ tab('plano'); subTab('edital'); }});
+
+  if(p){
+    let planejado = 0, cumprido = 0;
+    for(let x = p.inicio; x <= hj; x = maisDias(x,1)){
+      planejado += (p.ciclo[dow(x)] || []).reduce((a,b)=>a + b.horas, 0);
+      cumprido += minutosDoDia(x)/60;
+    }
+    const dif = cumprido - planejado;
+    if(dif < -1)
+      out.push({n:"erro", ico:"⏳", t:`${Math.abs(dif).toFixed(1).replace(".",",")} h atrás do plano`,
+        d:"Redistribuir o que falta resolve sem virar dívida.",
+        b:"Redistribuir", f:()=>{ tab('plano'); subTab('hoje'); rebalancear(); }});
+
+    const arr = p.ciclo[w] || [];
+    if(arr.length){
+      const horas = arr.reduce((a,b)=>a + b.horas, 0);
+      const pend = arr.filter((b,i)=> !(p.feitos && p.feitos[chaveBloco(hj,i)])).length;
+      if(pend > 0)
+        out.push({n:"info", ico:"🎯", t:`Hoje: ${pend} de ${arr.length} blocos pendentes`,
+          d:arr.map(b=>`${b.materia} ${b.horas.toString().replace(".",",")} h`).join(" · ") + ` — total ${horas.toFixed(1).replace(".",",")} h`,
+          b:"Ver", f:()=>{ tab('plano'); subTab('hoje'); }});
+      else
+        out.push({n:"ok", ico:"✅", t:"Objetivos de hoje cumpridos",
+          d:`${horas.toFixed(1).replace(".",",")} h feitas. Pode parar tranquilo.`,
+          b:"Ver", f:()=>{ tab('plano'); subTab('hoje'); }});
+    } else if(w === 0){
+      out.push({n:"ok", ico:"😴", t:"Domingo — dia de descanso",
+        d:"Descansar faz parte do plano. Se quiser adiantar, veja as prioridades.",
+        b:"Prioridades", f:()=> tab('prio')});
+    }
+  }
+
+  const criticos = ranking().filter(s=> s.dif >= 0.6).slice(0,2);
+  criticos.forEach(s=> out.push({n:"warn", ico:"🎯", t:`Reforçar ${s.assunto}`,
+    d:`${Math.round(s.dif*100)}% de erro em ${s.acertos}/${s.total} questões.`,
+    b:"Ver", f:()=> tab('prio')}));
+
+  if(db.ultimaExportacao){
+    const dias = Math.round((new Date(hj) - new Date(db.ultimaExportacao))/86400000);
+    if(dias >= 7)
+      out.push({n:"warn", ico:"💾", t:`Backup há ${dias} dias`,
+        d:"Seus dados moram só neste celular. Exporte uma cópia.",
+        b:"Exportar", f:()=>{ tab('plano'); subTab('edital'); exportar(); }});
+  } else if(db.sessoes.length >= 5){
+    out.push({n:"warn", ico:"💾", t:"Nunca exportou seus dados",
+      d:"Um backup leva 5 segundos e evita perder tudo.",
+      b:"Exportar", f:()=>{ tab('plano'); subTab('edital'); exportar(); }});
+  }
+
+  return out;
+}
+function contarPendencias(){
+  return gerarAvisos().filter(a=> a.n === "erro" || a.n === "warn").length;
+}
+function atualizarSino(){
+  const badge = document.getElementById("sinoBadge");
+  if(!badge) return;
+  const n = contarPendencias();
+  badge.style.display = n ? "grid" : "none";
+  badge.textContent = n;
+}
+function abrirAvisos(){
+  const lista = document.getElementById("listaAvisos");
+  const avisos = gerarAvisos();
+  lista.innerHTML = avisos.length
+    ? avisos.map((a,i)=>`<div class="aviso-item ${a.n}">
+        <span class="ico">${a.ico}</span>
+        <div class="corpo"><b>${a.t}</b><span>${a.d}</span></div>
+        ${a.b?`<button class="ir" onclick="acaoAviso(${i})">${a.b}</button>`:""}
+      </div>`).join("")
+    : `<div class="mini">Tudo em ordem. Nada pendente hoje.</div>`;
+  document.getElementById("painelAvisos").classList.remove("oculto");
+  atualizarSino();
+}
+function acaoAviso(i){
+  const avisos = gerarAvisos();
+  const a = avisos[i];
+  fecharAvisos();
+  if(a && a.f) setTimeout(a.f, 60);
+}
+function fecharAvisos(ev){
+  const painel = document.getElementById("painelAvisos");
+  if(ev && ev.target !== painel) return;
+  painel.classList.add("oculto");
+}
+
+/* ============================================================ AVISOS */
+function toast(msg, tipo){
+  const box = document.getElementById("toasts");
+  if(!box) return;
+  const el = document.createElement("div");
+  el.className = "toast " + (tipo || "info");
+  el.textContent = msg;
+  box.appendChild(el);
+  requestAnimationFrame(()=> el.classList.add("mostra"));
+  setTimeout(()=>{
+    el.classList.remove("mostra");
+    setTimeout(()=> el.remove(), 260);
+  }, 2600);
+}
+
+/* ============================================================ SUBABAS */
+function subTab(nome){
+  ["hoje","semana","rotina","edital"].forEach(x=>{
+    const el = document.getElementById("sub-"+x);
+    if(el) el.classList.toggle("oculto", x !== nome);
+  });
+  document.querySelectorAll(".subnav button").forEach(b=>{
+    b.classList.toggle("on", b.dataset.sub === nome);
+  });
+  if(nome === "hoje") renderHoje();
+  if(nome === "semana"){ renderChips2(); renderSemana(); renderSaldo(); }
+  if(nome === "rotina"){ renderRotinaTabela(); }
+}
+
+/* ============================================================ CRONOGRAMA DINÂMICO */
+function chaveBloco(d,i){ return d + "|" + i; }
+function renderChips2(){
+  const box = document.getElementById("chipsPlanos2");
+  if(!box) return;
+  box.innerHTML = db.planos.length
+    ? db.planos.map(p=>`<button class="chip ${p.id===db.ativoId?'on':''}" onclick="ativarPlano('${p.id}')">${p.nome}</button>`).join("")
+    : "";
+}
+function renderHoje(){
+  const box = document.getElementById("hojeBlocos");
+  const status = document.getElementById("statusPlano");
+  const feito = document.getElementById("hojeFeito");
+  if(!box) return;
+  const p = planoAtivo();
+  if(!p){
+    box.innerHTML = "Nenhum plano ativo. Vá em <b>Edital + IA</b> e gere um.";
+    if(status) status.innerHTML = "";
+    if(feito) feito.textContent = "—";
+    return;
+  }
+  const d = hoje(), w = dow(d);
+  const arr = p.ciclo[w] || [];
+
+  // situação: planejado até hoje x cumprido
+  let planejado = 0, cumprido = 0;
+  for(let x = p.inicio; x <= d; x = maisDias(x,1)){
+    planejado += (p.ciclo[dow(x)] || []).reduce((a,b)=>a + b.horas, 0);
+    cumprido += minutosDoDia(x)/60;
+  }
+  const dif = cumprido - planejado;
+  if(status){
+    if(planejado === 0) status.innerHTML = "";
+    else if(dif < -1) status.innerHTML = `<div class="status err">${Math.abs(dif).toFixed(1).replace(".",",")} h atrás do plano — dá para recuperar redistribuindo.</div>`;
+    else if(dif > 1) status.innerHTML = `<div class="status ok">${dif.toFixed(1).replace(".",",")} h adiantado. Bom ritmo.</div>`;
+    else status.innerHTML = `<div class="status info">Em dia com o plano.</div>`;
+  }
+
+  if(!arr.length){
+    const prox = [1,2,3,4,5,6].find(x=> (p.ciclo[x]||[]).length);
+    box.innerHTML = w === 0
+      ? "Hoje é dia de descanso. Aproveite."
+      : "Nenhum bloco previsto para hoje.";
+    if(prox !== undefined){
+      const quando = NOMES_DIA[prox];
+      const itens = (p.ciclo[prox]||[]).map(b=>`${b.materia} (${b.horas.toString().replace(".",",")} h)`).join(" · ");
+      box.innerHTML += `<div style="margin-top:8px">Próximo dia de estudo (${quando}): ${itens}</div>`;
+    }
+  } else {
+    box.innerHTML = arr.map((b,i)=>{
+      const ok = p.feitos && p.feitos[chaveBloco(d,i)];
+      return `<div class="bloco ${ok?'feito':''}">
+        <button class="chk" onclick="marcarBloco(${i})">${ok?'✓':'○'}</button>
+        <div class="txt">${b.materia}<small>${b.topico||""} · ${b.horas.toString().replace(".",",")} h</small></div>
+      </div>`;
+    }).join("");
+  }
+
+  const sessoes = db.sessoes.filter(s=>s.data === d);
+  if(feito){
+    if(!sessoes.length) feito.textContent = "Nada registrado ainda hoje.";
+    else {
+      const total = sessoes.reduce((a,s)=>a+s.minutos,0);
+      feito.innerHTML = `<b>${(total/60).toFixed(2).replace(".",",")} h</b> em ${sessoes.length} sessão(ões): ` +
+        sessoes.map(s=>`${s.materia} ${s.minutos}min`).join(" · ");
+    }
+  }
+}
+function marcarBloco(i){
+  const p = planoAtivo();
+  if(!p) return;
+  const d = hoje(), w = dow(d), arr = p.ciclo[w] || [];
+  const b = arr[i];
+  if(!b) return;
+  p.feitos = p.feitos || {};
+  const k = chaveBloco(d, i);
+  if(p.feitos[k]){
+    delete p.feitos[k];
+    const idx = db.sessoes.findIndex(s=> s.data===d && s.materia===b.materia &&
+      s.minutos===Math.round(b.horas*60) && s.bloco==="plano");
+    if(idx >= 0) db.sessoes.splice(idx,1);
+    toast("Bloco desmarcado", "info");
+  } else {
+    p.feitos[k] = true;
+    db.sessoes.push({data:d, materia:b.materia, minutos:Math.round(b.horas*60),
+      quando:new Date().toISOString(), bloco:"plano", topico:b.topico||""});
+    toast("Feito! +" + b.horas.toString().replace(".",",") + " h de " + b.materia, "ok");
+  }
+  salvar(); renderHoje(); renderSaldo(); atualizarTudo();
+}
+function renderSaldo(){
+  const box = document.getElementById("saldoMaterias");
+  if(!box) return;
+  const p = planoAtivo();
+  if(!p){ box.textContent = "—"; return; }
+  const planejado = {}, feito = {};
+  [1,2,3,4,5,6].forEach(d=> (p.ciclo[d]||[]).forEach(b=>{
+    planejado[b.materia] = (planejado[b.materia]||0) + b.horas;
+  }));
+  db.sessoes.forEach(s=>{ feito[s.materia] = (feito[s.materia]||0) + s.minutos/60; });
+  const linhas = Object.entries(planejado).sort((a,b)=>b[1]-a[1]).map(([m,h])=>{
+    const f = feito[m] || 0;
+    const pct = Math.min(100, h ? f/h*100 : 0);
+    const cor = pct >= 80 ? "#2E8B57" : pct >= 40 ? "#C2A24E" : "#C0392B";
+    return `<div class="saldo"><span class="nome">${m}</span>
+      <span class="barra2"><i style="width:${pct}%;background:${cor}"></i></span>
+      <span style="color:#7A8AA0;font-size:11px;min-width:64px;text-align:right">
+        ${f.toFixed(1).replace(".",",")}/${h.toFixed(1).replace(".",",")} h</span></div>`;
+  }).join("");
+  box.innerHTML = linhas || "Sem dados ainda.";
+}
+function rebalancear(){
+  const p = planoAtivo();
+  if(!p){ toast("Nenhum plano ativo", "err"); return; }
+  const inicio = hoje();
+  let alvo = 0;
+  for(let x = inicio; x <= p.fim; x = maisDias(x,1))
+    alvo += (p.ciclo[dow(x)] || []).reduce((a,b)=>a + b.horas, 0);
+  if(alvo <= 0){ toast("Não há horas restantes no plano", "err"); return; }
+  const ciclo = montarCiclo(inicio, true);
+  const novo = {id:uid(), nome:"Plano rebalanceado "+(db.planos.length+1),
+    inicio, fim:p.fim, dias:Math.round((new Date(p.fim)-new Date(inicio))/86400000)+1,
+    horasSemana:horasSemana(inicio), ciclo, origem:"rebalanceado", criado:new Date().toISOString()};
+  db.planos.push(novo); db.ativoId = novo.id; salvar();
+  renderChips(); renderListaPlanos(); renderHoje(); renderSaldo(); renderSemana(); desenharTudo();
+  toast("Plano redistribuído a partir de hoje", "ok");
+}
+
 /* ============================================================ ABAS */
 function tab(n){
   ["painel","crono","reg","quest","prio","plano"].forEach(x=>
@@ -1287,7 +1661,8 @@ function tab(n){
   if(n==="reg") renderRegistro();
   if(n==="quest") renderHistorico();
   if(n==="prio") renderPrioridades();
-  if(n==="plano"){ renderRotinaTabela(); renderListaPlanos(); renderPesos(); renderSemana(); resumo(); atualizarJanela(); }
+  if(n==="plano"){ renderHoje(); renderChips2(); renderSaldo(); renderSemana(); renderRotinaTabela();
+    renderListaPlanos(); renderPesos(); resumo(); atualizarJanela(); }
   if(n==="painel"){ renderChips(); desenharTudo(); }
 }
 function atualizarTudo(){
@@ -1301,6 +1676,7 @@ function atualizarTudo(){
   document.getElementById("n-sessoes").textContent=db.sessoes.length;
   document.getElementById("n-questoes").textContent=db.questoes.length;
   const dd=new Date(d+"T12:00:00");
+  atualizarSino();
   document.getElementById("cabecalho").textContent=dd.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})+(meta?"":" · descanso");
   desenharTudo();
 }
@@ -1310,8 +1686,18 @@ document.getElementById("data").value=hoje();
 document.getElementById("apiKey").value=db.apiKey||"";
 document.getElementById("apiModel").value=db.apiModel||"gemini-flash-lite-latest";
 carregarCronometro();
+setTimeout(()=>{
+  atualizarSino();
+  let visto = null;
+  try{ visto = localStorage.getItem("szm_aviso_dia"); }catch(e){}
+  if(visto !== hoje()){
+    try{ localStorage.setItem("szm_aviso_dia", hoje()); }catch(e){}
+    if(gerarAvisos().length) abrirAvisos();
+  }
+}, 400);
 renderRotinaForm(); popularSelects(); renderMaterias(); renderChips();
-renderListaPlanos(); renderPesos(); renderSemana(); atualizarJanela(); atualizarTudo();
+renderListaPlanos(); renderPesos(); renderSemana(); renderHoje(); renderChips2(); renderSaldo();
+atualizarJanela(); atualizarTudo();
 window.addEventListener("resize",()=>{ if(!document.getElementById("tab-painel").classList.contains("oculto")) desenharTudo(); });
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
