@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A2240">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" href="./icon-192.png">
+<title>Estudos TJSC</title>
+<style>
+  :root{
+    --azul:#0A2240; --azul2:#14325C; --teal:#30A6B5; --ouro:#C2A24E;
+    --papel:#FFF9EC; --cinza:#F7FAFD; --texto:#12233A; --borda:#E1E9F3;
+    --sombra:0 2px 10px rgba(10,34,64,.07);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%}
+  button, .chip, .dias button{touch-action:manipulation}
+  body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,sans-serif;background:#F2F7FB;color:var(--texto);padding-bottom:78px}
+  header{background:linear-gradient(135deg,#0A2240 0%,#123A66 60%,#1B5E86 100%);
+         color:#fff;padding:10px 14px;position:sticky;top:0;z-index:20;
+         box-shadow:0 3px 12px rgba(10,34,64,.25)}
+  .marca{display:flex;align-items:center;gap:10px}
+  .marca .logo{background:#fff;border-radius:10px;padding:4px 7px;display:flex;align-items:center}
+  .marca .logo img{height:30px;display:block}
+  .marca h1{margin:0;font-size:14px;letter-spacing:.2px;line-height:1.15}
+  .marca p{margin:1px 0 0;font-size:10.5px;color:#BFD4E8}
+  .faixa-ouro{height:2px;background:linear-gradient(90deg,var(--teal),var(--ouro),var(--teal));margin-top:8px;border-radius:2px}
+  nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#fff;border-top:1px solid var(--borda);
+      padding-bottom:env(safe-area-inset-bottom);z-index:20;box-shadow:0 -2px 10px rgba(10,34,64,.05)}
+  nav button{flex:1;border:0;background:none;padding:7px 1px 9px;font-size:9px;color:#7A8597;font-weight:600}
+  nav button.on{color:var(--teal)}
+  nav button.on span{
+    background:linear-gradient(135deg,#30A6B5,#1B7C8C);color:#fff;
+    width:34px;height:34px;line-height:34px;border-radius:50%;margin:0 auto 2px;
+    display:block;box-shadow:0 4px 10px rgba(48,166,181,.45);transform:translateY(-6px);
+  }
+  nav button span{display:block;font-size:16px;line-height:1.2}
+  main{padding:11px}
+  .card{background:#fff;border:1px solid var(--borda);border-radius:16px;padding:13px;margin-bottom:11px;box-shadow:var(--sombra)}
+  .card h2{margin:0 0 9px;font-size:11.5px;color:var(--azul);text-transform:uppercase;letter-spacing:.7px;font-weight:800}
+  .mat{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #E6EAF0}
+  .mat:last-child{border-bottom:0}
+  .mat .nome{flex:1;font-size:13px}
+  .mat .tempo{font-variant-numeric:tabular-nums;font-weight:700;color:var(--azul);width:66px;text-align:right;font-size:12.5px}
+  .mat.run{background:#FFF9EC;border-radius:10px;margin:0 -8px;padding:7px 8px;box-shadow:inset 0 0 0 1px var(--borda)}
+  .bt{border:0;border-radius:9px;width:34px;height:31px;font-size:13px;font-weight:700}
+  .bt.play{background:#C6E0B4;color:#1F4D2B}
+  .bt.pause{background:#FFE699;color:#6B5300}
+  .bt.stop{background:#F4CCCC;color:#7A1F1F}
+  .linha{display:flex;align-items:center;gap:8px;margin:5px 0}
+  .linha label{flex:1;font-size:12.5px}
+  input,select,textarea{font-family:inherit;font-size:12.5px;padding:7px;border:1px solid #D8DEE8;border-radius:8px;background:var(--papel);color:#111}
+  input[type=number]{width:70px;text-align:right}
+  input[type=time]{width:88px}
+  textarea{width:100%;min-height:90px;resize:vertical}
+  .barra{height:10px;background:#E3E7EE;border-radius:99px;overflow:hidden;margin:6px 0 3px}
+  .barra i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),#7AC9D3,var(--ouro));width:0}
+  .kpi{display:flex;justify-content:space-between;font-size:11.5px;color:#4A5568}
+  .btn{border:0;border-radius:99px;padding:11px 18px;font-size:12.5px;font-weight:700;
+       background:linear-gradient(135deg,#0A2240,#14325C);color:#fff;margin:3px 5px 0 0;
+       box-shadow:0 4px 12px rgba(10,34,64,.22)}
+  .btn.principal{background:linear-gradient(135deg,#30A6B5,#1B7C8C);box-shadow:0 4px 14px rgba(48,166,181,.4)}
+  .btn.sec{background:#fff;color:var(--azul2);border:1px solid var(--borda);box-shadow:none}
+  .btn.mini{padding:6px 9px;font-size:11.5px}
+  .item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #E6EAF0;font-size:12px}
+  .item button{border:0;background:none;color:#9C2727;font-size:13px}
+  .tag{font-size:10px;padding:2px 6px;border-radius:99px;background:#E8EEF9;color:var(--azul2)}
+  .mini{font-size:11px;color:#6B7280;margin-top:5px;line-height:1.45}
+  .oculto{display:none}
+  .aviso{background:#FFF9EC;border-left:4px solid var(--ouro);padding:9px;border-radius:10px;font-size:11px;margin-bottom:8px;line-height:1.45}
+  .prio{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid #E6EAF0}
+  .prio .nome{flex:1;font-size:12px}
+  .prio .val{font-weight:700;font-size:11.5px;min-width:36px;text-align:right}
+  .bolinha{width:8px;height:8px;border-radius:50%}
+  .dia{background:#fff;border-radius:10px;padding:8px 10px;margin-bottom:6px;border:1px solid #E6EAF0}
+  .dia b{font-size:11.5px;color:var(--azul)}
+  .dia div{font-size:11.5px;margin-top:2px;color:#333}
+  canvas{width:100%;display:block}
+  .anel{--p:0;width:108px;height:108px;border-radius:50%;
+        background:conic-gradient(var(--teal) calc(var(--p)*1%), #E4EDF5 0);
+        display:grid;place-items:center;margin:12px auto 6px;
+        box-shadow:0 6px 18px rgba(48,166,181,.22)}
+  .anel-int{width:86px;height:86px;border-radius:50%;background:#fff;
+            display:grid;place-items:center;text-align:center;line-height:1.1}
+  .anel-int b{display:block;font-size:20px;color:var(--azul)}
+  .anel-int span{font-size:9px;color:#7A8AA0;letter-spacing:.4px}
+  .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px}
+  .chip{border:1px solid var(--borda);background:#fff;color:var(--azul2);border-radius:99px;padding:7px 12px;font-size:11.5px;white-space:nowrap;font-weight:700}
+  .chip.on{background:linear-gradient(135deg,var(--teal),#1B7C8C);color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(48,166,181,.35)}
+  .dias{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0}
+  .dias button{border:1px solid #C9D6EA;background:#fff;color:var(--azul2);border-radius:8px;padding:5px 8px;font-size:11px;font-weight:700}
+  .dias button.on{background:var(--teal);color:#fff;border-color:transparent}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .num{font-size:20px;font-weight:800;color:var(--teal);line-height:1.1}
+  table{width:100%;border-collapse:collapse;font-size:11.5px}
+  td,th{padding:4px 2px;border-bottom:1px solid #E6EAF0;text-align:left}
+  th{font-size:10px;color:#6B7280;text-transform:uppercase}
+</style>
+</head>
+<body>
+<header>
+  <div class="marca">
+    <span class="logo"><img src="./logo-mark.png" alt="SZM Concurseiro"></span>
+    <div>
+      <h1 id="titulo">SZM Concurseiro</h1>
+      <p id="cabecalho">—</p>
+    </div>
+  </div>
+  <div class="faixa-ouro"></div>
+</header>
+
+<main>
+  <!-- PAINEL -->
+  <section id="tab-painel">
+    <div class="card">
+      <h2>Plano ativo</h2>
+      <div class="chips" id="chipsPlanos"></div>
+      <div class="mini" id="planoInfo">Nenhum plano ainda.</div>
+    </div>
+    <div class="card">
+      <h2>Hoje</h2>
+      <div class="kpi"><span id="kpi-est">0,00 h</span><span id="kpi-meta">meta 0 h</span></div>
+      <div class="anel" id="anelHoje" style="--p:0">
+        <div class="anel-int"><b id="kpi-pct">0%</b><span>DA META</span></div>
+      </div>
+      <div class="grid2" style="margin-top:9px">
+        <div><div class="num" id="n-sessoes">0</div><div class="mini" style="margin:0">sessões</div></div>
+        <div><div class="num" id="n-questoes">0</div><div class="mini" style="margin:0">baterias</div></div>
+      </div>
+    </div>
+    <div class="card"><h2>Horas por matéria</h2><canvas id="cvHoras" height="180"></canvas><div class="mini" id="cvHorasMsg"></div></div>
+    <div class="card"><h2>Semana a semana</h2><canvas id="cvSemana" height="160"></canvas><div class="mini">Barras: horas feitas. Linha: meta do período.</div></div>
+    <div class="card"><h2>Onde erra mais</h2><canvas id="cvErros" height="150"></canvas><div class="mini" id="cvErrosMsg"></div></div>
+  </section>
+
+  <!-- ESTUDO -->
+  <section id="tab-crono" class="oculto">
+    <div class="card"><h2>Cronômetro</h2><div id="materias"></div>
+      <div class="mini">Um por vez. Ao encerrar, os minutos vão para o registro do dia.</div></div>
+  </section>
+
+  <!-- REGISTRO -->
+  <section id="tab-reg" class="oculto">
+    <div class="card">
+      <h2>Registro do dia</h2>
+      <div class="linha"><label>Data</label><input type="date" id="data" onchange="renderRegistro()"></div>
+      <div class="kpi"><span id="reg-total">0,00 h</span><span id="reg-meta">meta 0 h</span></div>
+      <div class="barra"><i id="reg-barra"></i></div>
+      <h2 style="margin-top:12px">Minutos por matéria</h2>
+      <div id="reg-materias"></div>
+    </div>
+    <div class="card"><h2>Sessões do dia</h2><div id="sessoes" class="mini">—</div></div>
+  </section>
+
+  <!-- QUESTÕES -->
+  <section id="tab-quest" class="oculto">
+    <div class="card">
+      <h2>Bateria de questões</h2>
+      <div class="linha"><label>Data</label><input type="date" id="q-data"></div>
+      <div class="linha"><label>Matéria</label><select id="q-materia" onchange="atualizarSelectAssuntos()"></select></div>
+      <div class="linha"><label>Assunto</label><select id="q-assunto"></select></div>
+      <div class="linha"><label>Questões</label><input type="number" id="q-total" min="1" placeholder="0"></div>
+      <div class="linha"><label>Acertos</label><input type="number" id="q-acertos" min="0" placeholder="0"></div>
+      <button class="btn" onclick="lancarQuestoes()">Registrar</button>
+      <div class="mini" id="q-msg"></div>
+    </div>
+    <div class="card"><h2>Histórico</h2><div id="q-historico" class="mini">Nenhuma bateria.</div></div>
+  </section>
+
+  <!-- PRIORIDADE -->
+  <section id="tab-prio" class="oculto">
+    <div class="card"><h2>Estude primeiro</h2>
+      <div class="aviso">Peso da matéria × dificuldade medida. Só entra assunto com 5 questões ou mais.</div>
+      <div id="ranking"></div></div>
+    <div class="card"><h2>Por matéria</h2><div id="porMateria"></div></div>
+  </section>
+
+  <!-- PLANO -->
+  <section id="tab-plano" class="oculto">
+    <div class="card">
+      <h2>1. Sua rotina</h2>
+      <div class="aviso">A IA precisa saber quanto tempo você tem de verdade. Preencha e salve.</div>
+      <div class="linha"><label>Dormir (h)</label><input type="number" id="r-dormir" min="4" max="10" step="0.5" value="8"></div>
+      <div class="linha"><label>Trabalho (horário)</label>
+        <input type="time" id="r-trab-ini" value="12:30"> <input type="time" id="r-trab-fim" value="16:30"></div>
+      <div class="mini">Dias de trabalho:</div>
+      <div class="dias" id="r-trab-dias"></div>
+      <div class="linha"><label>Hora extra (min/dia)</label><input type="number" id="r-extra" min="0" value="40"></div>
+      <div class="linha"><label>Faculdade</label>
+        <input type="time" id="r-facul-ini" value="19:00"> <input type="time" id="r-facul-fim" value="22:00"></div>
+      <div class="mini">Dias de faculdade:</div>
+      <div class="dias" id="r-facul-dias"></div>
+      <div class="linha"><label>Deslocamento (min/dia)</label><input type="number" id="r-desloc" min="0" value="40"></div>
+      <div class="linha"><label>Treino (min/sessão)</label><input type="number" id="r-treino-dur" min="0" value="70"></div>
+      <div class="mini">Dias de treino:</div>
+      <div class="dias" id="r-treino-dias"></div>
+      <div class="mini">Dias de folga (sem estudo):</div>
+      <div class="dias" id="r-folgas"></div>
+      <div class="linha"><label>Outras atividades</label><input type="text" id="r-outras" placeholder="ex.: inglês terça 20h" style="flex:1"></div>
+      <div class="linha"><label>Férias do trabalho (de/até)</label>
+        <input type="date" id="r-ferias-ini"> <input type="date" id="r-ferias-fim"></div>
+      <button class="btn" onclick="salvarRotina()">Salvar rotina</button>
+      <div class="mini" id="r-msg"></div>
+      <div id="r-tabela" style="margin-top:8px"></div>
+    </div>
+
+    <div class="card">
+      <h2>2. Prova e período</h2>
+      <div class="linha"><label>Data da prova</label><input type="date" id="p-prova"></div>
+      <button class="btn sec mini" onclick="extrairProva()">Procurar no edital</button>
+      <div class="kpi" style="margin-top:8px"><span id="p-janela">—</span><span id="p-dias-lbl">—</span></div>
+      <div class="mini" id="p-msg2">Se a data já passou, o plano vira 180 dias a partir de hoje.</div>
+    </div>
+
+    <div class="card">
+      <h2>3. Edital</h2>
+      <textarea id="edital" placeholder="Cole aqui o Anexo I ou anexe o arquivo..."></textarea>
+      <button class="btn sec" onclick="document.getElementById('arqEdital').click()">Anexar edital</button>
+      <input type="file" id="arqEdital" accept=".txt,.md,.csv,.pdf" class="oculto"
+             onchange="anexarEdital(this,'edital','edital-msg')">
+      <button class="btn" onclick="lerEdital()">Ler edital</button>
+      <div class="mini" id="edital-msg"></div>
+    </div>
+
+    <div class="card">
+      <h2>3b. Atualização do edital</h2>
+      <div class="aviso">Saiu retificação? Cole o edital novo aqui. O app compara com o atual, mostra o que mudou
+        e refaz o plano só com o que falta — mantendo o que você já cumpriu.</div>
+      <textarea id="editalNovo" placeholder="Cole aqui o edital atualizado ou anexe o arquivo..."></textarea>
+      <button class="btn sec" onclick="document.getElementById('arqEditalNovo').click()">Anexar edital novo</button>
+      <input type="file" id="arqEditalNovo" accept=".txt,.md,.csv,.pdf" class="oculto"
+             onchange="anexarEdital(this,'editalNovo','upd-msg')">
+      <button class="btn" onclick="compararEdital()">Comparar</button>
+      <div id="diff" class="mini"></div>
+      <button class="btn sec" id="btnAplicar" style="display:none" onclick="aplicarAtualizacao()">
+        Aplicar e recalcular plano</button>
+      <div class="mini" id="upd-msg"></div>
+    </div>
+
+    <div class="card">
+      <h2>4. Gerar</h2>
+      <div class="linha"><label>Modelo</label><input type="text" id="apiModel" value="gemini-flash-lite-latest" style="flex:1"></div>
+      <div class="linha"><label>Chave Gemini</label><input type="password" id="apiKey" placeholder="cole a chave" style="flex:1"></div>
+      <button class="btn" onclick="salvarChave()">Salvar chave</button>
+      <button class="btn principal" onclick="gerarComIA()">Gerar com IA</button>
+      <button class="btn sec" onclick="novoPlanoRegras()">Gerar por regras</button>
+      <button class="btn sec" onclick="apagarChave()">Apagar chave</button>
+      <div class="mini" id="ia-msg"></div>
+    </div>
+
+    <div class="card"><h2>Meus planos</h2><div id="listaPlanos" class="mini">Nenhum plano ainda.</div>
+      <button class="btn sec" onclick="document.getElementById('arqPlano').click()">Importar plano</button>
+      <input type="file" id="arqPlano" accept=".json" class="oculto" onchange="importarPlano(this)"></div>
+
+    <div class="card"><h2>Disciplinas e pesos</h2><div id="pesos"></div></div>
+    <div class="card"><h2>Semana do plano ativo</h2><div id="semana" class="mini">—</div></div>
+
+    <div class="card">
+      <h2>Dados</h2>
+      <p class="mini" id="resumo-dados"></p>
+      <button class="btn" onclick="exportar()">Exportar tudo</button>
+      <button class="btn sec" onclick="document.getElementById('arq').click()">Importar</button>
+      <input type="file" id="arq" accept=".json" class="oculto" onchange="importar(this)">
+      <button class="btn sec" onclick="limpar()">Apagar tudo</button>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button class="on" data-tab="painel" onclick="tab('painel')"><span>🏠</span>Painel</button>
+  <button data-tab="crono" onclick="tab('crono')"><span>⏱</span>Estudo</button>
+  <button data-tab="reg" onclick="tab('reg')"><span>📋</span>Registro</button>
+  <button data-tab="quest" onclick="tab('quest')"><span>✍️</span>Questões</button>
+  <button data-tab="prio" onclick="tab('prio')"><span>🎯</span>Prioridade</button>
+  <button data-tab="plano" onclick="tab('plano')"><span>📅</span>Plano</button>
+</nav>
+
+<script>
+/* ============================================================ BASE */
+const PADRAO = {
+  "Língua Portuguesa":["Interpretação de textos","Tipos e gêneros textuais","Ortografia","Acentuação","Coesão e coerência","Concordância","Pontuação","Crase","Regência","Colocação de pronomes","Semântica e reescrita","Sintaxe do período"],
+  "Direito Processual Penal":["Princípios","Inquérito policial","Ação penal","Sujeitos processuais","Competência","Citações e intimações","Flagrante","Preventiva e temporária","Cautelares e fiança","Provas","Sentença e nulidades","Recursos","Habeas corpus"],
+  "Direito Penal":["Aplicação da lei","Tempo e lugar do crime","Tipicidade","Ilicitude","Culpabilidade","Concurso de pessoas","Concurso de crimes","Contra a pessoa","Contra o patrimônio","Contra a Administração","Penas e extinção"],
+  "Direito Processual Civil":["Devido processo legal","Jurisdição e ação","Competência","Partes","Intervenção de terceiros","Atos e prazos","Tutela provisória","Petição inicial","Contestação e revelia","Provas","Sentença e cumprimento","Recursos"],
+  "Legislação PJSC":["Organização do Judiciário","Regimento Interno","Corregedoria","Regime disciplinar","Estatuto dos servidores","Divisão judiciária"],
+  "Direito Civil":["LINDB","Pessoas naturais","Pessoas jurídicas","Bens","Negócio jurídico","Prescrição e decadência","Obrigações","Contratos","Responsabilidade civil","Posse e propriedade","Família e sucessões"],
+  "Direito Constitucional":["Princípios fundamentais","Direitos individuais","Direitos sociais","Nacionalidade","Direitos políticos","Partidos","Organização do Estado","Administração pública","Poder Judiciário","Funções essenciais","Controle de constitucionalidade","Remédios"],
+  "Direito Administrativo":["Organização administrativa","Princípios","Atos administrativos","Poderes","Agentes públicos","Improbidade","Licitações","Contratos","Serviços públicos","Responsabilidade do Estado","Controle","Estatuto dos servidores SC"],
+  "Ética e Gestão":["Princípios e moralidade","Deveres do servidor","Processo disciplinar","Improbidade","Código de Ética PJSC","Conflito de interesses","Gestão de pessoas"],
+  "Informática e LGPD":["Hardware e software","Sistemas operacionais","Internet","Editores de texto e planilhas","Segurança da informação","LGPD fundamentos","LGPD direitos","Dados no serviço público"],
+  "Direitos Humanos":["Dignidade e igualdade","Proteção internacional","Acesso à justiça","Grupos vulneráveis","Políticas judiciárias"]
+};
+
+const FERIADOS = ["2026-11-24","2026-12-24","2026-12-25","2026-12-31","2027-01-01",
+  "2027-02-08","2027-02-09","2027-02-10","2027-03-26","2027-04-21","2027-05-01"];
+const NOMES_DIA = ["dom","seg","ter","qua","qui","sex","sáb"];
+const CHAVE="tjsc_app_v4";
+
+const ROTINA_PADRAO = {
+  configurada:false, dormir:8, trabIni:"12:30", trabFim:"16:30", extra:40,
+  trabDias:[1,2,3,4,5],
+  faculIni:"19:00", faculFim:"22:00", faculDias:[1,2,3,4,5],
+  desloc:40, treinoDur:70, treinoDias:[1,3,5,6],
+  folgas:[0], outras:"", feriasIni:"", feriasFim:""
+};
+
+let db = { sessoes:[], questoes:[], edital:{texto:"",disciplinas:[]},
+           pesos:{}, planos:[], ativoId:null, apiKey:"", apiModel:"gemini-flash-lite-latest",
+           rotina: Object.assign({},ROTINA_PADRAO) };
+
+function carregar(){
+  try{ const t=localStorage.getItem(CHAVE); if(t) db=Object.assign(db,JSON.parse(t)); }catch(e){}
+  db.sessoes=db.sessoes||[]; db.questoes=db.questoes||[]; db.planos=db.planos||[];
+  db.edital=db.edital||{texto:"",disciplinas:[]};
+  db.rotina=Object.assign({},ROTINA_PADRAO,db.rotina||{});
+  if(!db.pesos||!Object.keys(db.pesos).length) resetarPesos();
+  if(db.planos.length && !db.ativoId) db.ativoId=db.planos[0].id;
+}
+function salvar(){ try{ localStorage.setItem(CHAVE,JSON.stringify(db)); }catch(e){} }
+function resetarPesos(){ db.pesos={}; disciplinas().forEach(d=>db.pesos[d.nome]=Math.max(1,d.topicos.length)); }
+function disciplinas(){
+  if(db.edital&&db.edital.disciplinas&&db.edital.disciplinas.length) return db.edital.disciplinas;
+  return Object.keys(PADRAO).map(n=>({nome:n,topicos:PADRAO[n]}));
+}
+
+/* ============================================================ DATAS E DISPONIBILIDADE */
+function iso(d){ const x=new Date(d); x.setHours(12,0,0,0); return x.toISOString().slice(0,10); }
+function hoje(){ return iso(new Date()); }
+function maisDias(d,n){ return iso(new Date(new Date(d+"T12:00:00").getTime()+n*86400000)); }
+function dow(d){ return new Date(d+"T12:00:00").getDay(); }
+function minutosEntre(ini,fim){
+  if(!ini||!fim) return 0;
+  const [h1,m1]=ini.split(":").map(Number), [h2,m2]=fim.split(":").map(Number);
+  let a=h1*60+m1, b=h2*60+m2;
+  if(b<a) b+=24*60;
+  return b-a;
+}
+/* horas livres por dia da semana, a partir da rotina */
+function disponibilidade(){
+  const r=db.rotina, out=new Array(7).fill(0);
+  for(let d=0; d<7; d++){
+    if(r.folgas.includes(d)){ out[d]=0; continue; }
+    let livre = 24 - (r.dormir||8) - 1.5;           // refeições e higiene
+    const trabalhaHoje = (r.trabDias||[1,2,3,4,5]).includes(d);
+    if(trabalhaHoje){
+      const trabMin = minutosEntre(r.trabIni,r.trabFim)+(r.extra||0);
+      if(trabMin>0) livre -= trabMin/60;
+    }
+    if((r.faculDias||[]).includes(d)) livre -= minutosEntre(r.faculIni,r.faculFim)/60;
+    if((r.treinoDias||[]).includes(d)) livre -= (r.treinoDur||0)/60;
+    livre -= (r.desloc||0)/60;
+    out[d] = Math.max(0, Math.min(12, +livre.toFixed(1)));
+  }
+  return out;
+}
+function emFeriasTrab(d){
+  const r=db.rotina;
+  return r.feriasIni && r.feriasFim && d>=r.feriasIni && d<=r.feriasFim;
+}
+function metaDoDia(d){
+  if(FERIADOS.includes(d)) return 0;
+  const r=db.rotina;
+  if(!r.configurada){
+    // regra antiga, quando a rotina não foi preenchida
+    const w=dow(d); if(w===0) return 0; if(w===6) return 4;
+    return 3;
+  }
+  if(r.folgas.includes(dow(d))) return 0;
+  let h = disponibilidade()[dow(d)];
+  if(emFeriasTrab(d) && (r.trabDias||[1,2,3,4,5]).includes(dow(d)))
+    h = Math.min(12, h + minutosEntre(r.trabIni,r.trabFim)/60);
+  return +h.toFixed(1);
+}
+function janela(){
+  const prova = db.rotina.prova || "";
+  const hj = hoje();
+  let inicio = hj, fim, dias, motivo;
+  if(prova && prova > hj){
+    fim = prova; dias = Math.max(7, Math.round((new Date(fim)-new Date(inicio))/86400000));
+    motivo = "até a prova";
+  } else {
+    dias = 180; fim = maisDias(inicio, dias-1);
+    motivo = prova ? "data da prova já passou — 180 dias" : "sem data de prova — 180 dias";
+  }
+  return {inicio, fim, dias, motivo};
+}
+function horasSemana(inicio){
+  let s=0; for(let i=0;i<7;i++) s+=metaDoDia(maisDias(inicio,i)); return +s.toFixed(1);
+}
+
+/* ============================================================ CRONÔMETRO */
+const estado={}; let ativoNome=null;
+function nomesMaterias(){ return disciplinas().map(d=>d.nome); }
+function garantirEstado(){ nomesMaterias().forEach(n=>{ if(!estado[n]) estado[n]={seg:0,rodando:false,marca:0}; }); }
+function renderMaterias(){
+  garantirEstado();
+  document.getElementById("materias").innerHTML = nomesMaterias().map((m,i)=>{
+    const e=estado[m];
+    return `<div class="mat ${ativoNome===m?'run':''}">
+      <span class="nome">${m}</span><span class="tempo" id="t${i}">00:00:00</span>
+      <button class="bt ${e.rodando?'pause':'play'}" onclick="alternar('${m.replace(/'/g,"\\'")}')">${e.rodando?'⏸':'▶'}</button>
+      <button class="bt stop" onclick="encerrar('${m.replace(/'/g,"\\'")}')">⏹</button></div>`;
+  }).join("");
+}
+function alternar(m){
+  const e=estado[m];
+  if(e.rodando){ e.seg+=(Date.now()-e.marca)/1000; e.rodando=false; ativoNome=null; }
+  else{ Object.values(estado).forEach(o=>{ if(o.rodando){ o.seg+=(Date.now()-o.marca)/1000; o.rodando=false; } });
+        e.marca=Date.now(); e.rodando=true; ativoNome=m; }
+  renderMaterias();
+}
+function encerrar(m){
+  const e=estado[m];
+  if(e.rodando){ e.seg+=(Date.now()-e.marca)/1000; e.rodando=false; }
+  const seg=e.seg;
+  if(seg<30){ if(seg>0&&confirm("Menos de 30 segundos. Descartar?")) resetar(m); return; }
+  const min=Math.max(1,Math.round(seg/60));
+  db.sessoes.push({data:hoje(),materia:m,minutos:min,quando:new Date().toISOString()});
+  salvar(); resetar(m); atualizarTudo(); salvarCronometro(); alert("+"+min+" min em "+m);
+}
+function resetar(m){ estado[m]={seg:0,rodando:false,marca:0}; ativoNome=null; salvarCronometro(); renderMaterias(); }
+
+const CRONO_KEY = "tjsc_crono_v1";
+function salvarCronometro(){
+  const d={};
+  Object.entries(estado).forEach(([n,e])=>{
+    d[n]={seg:+e.seg.toFixed(1), rodando:e.rodando, ts:Date.now()};
+  });
+  try{ localStorage.setItem(CRONO_KEY, JSON.stringify(d)); }catch(e){}
+}
+function carregarCronometro(){
+  let d=null;
+  try{ d=JSON.parse(localStorage.getItem(CRONO_KEY)||"null"); }catch(e){}
+  if(!d) return;
+  Object.entries(d).forEach(([n,e])=>{
+    if(!estado[n]) estado[n]={seg:0,rodando:false,marca:0};
+    let seg=Number(e.seg)||0;
+    if(e.rodando){
+      const gap=(Date.now()-(e.ts||0))/1000;
+      // só continua contando se o app ficou fechado menos de 10 minutos
+      if(gap>=0 && gap<600){ seg+=gap; estado[n].rodando=true; estado[n].marca=Date.now(); ativoNome=n; }
+    }
+    estado[n].seg=seg;
+  });
+}
+setInterval(()=>{
+  nomesMaterias().forEach((m,i)=>{
+    const e=estado[m]; if(!e) return;
+    let s=e.seg+(e.rodando?(Date.now()-e.marca)/1000:0);
+    const el=document.getElementById("t"+i);
+    if(el){ const h=Math.floor(s/3600),mi=Math.floor((s%3600)/60),g=Math.floor(s%60);
+      el.textContent=String(h).padStart(2,"0")+":"+String(mi).padStart(2,"0")+":"+String(g).padStart(2,"0"); }
+  });
+},500);
+setInterval(salvarCronometro, 30000);
+
+/* ============================================================ REGISTRO */
+function minutosDoDia(d){ return db.sessoes.filter(s=>s.data===d).reduce((a,s)=>a+s.minutos,0); }
+function renderRegistro(){
+  const d=document.getElementById("data").value||hoje();
+  const min=minutosDoDia(d), meta=metaDoDia(d)*60;
+  document.getElementById("reg-total").textContent=(min/60).toFixed(2).replace(".",",")+" h";
+  document.getElementById("reg-meta").textContent="meta "+String(metaDoDia(d)).replace(".",",")+" h";
+  document.getElementById("reg-barra").style.width=(meta?Math.min(100,min/meta*100):0)+"%";
+  document.getElementById("reg-materias").innerHTML=nomesMaterias().map(m=>{
+    const atual=db.sessoes.filter(s=>s.data===d&&s.materia===m).reduce((a,s)=>a+s.minutos,0);
+    return `<div class="linha"><label>${m}</label>
+      <input type="number" min="0" max="1440" value="${atual||""}" placeholder="0" onchange="lancar('${d}','${m.replace(/'/g,"\\'")}',this.value)"></div>`;
+  }).join("");
+  const ss=db.sessoes.map((s,i)=>({...s,i})).filter(s=>s.data===d);
+  document.getElementById("sessoes").innerHTML=ss.length
+    ? ss.map(s=>`<div class="item"><span>${s.materia} — ${s.minutos} min <span class="tag">${new Date(s.quando).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span></span><button onclick="apagarSessao(${s.i})">✕</button></div>`).join("")
+    : "Nenhuma sessão neste dia.";
+}
+function lancar(d,m,v){
+  const alvo=Math.min(1440, Math.max(0, parseInt(v||"0",10)||0));
+  db.sessoes=db.sessoes.filter(s=>!(s.data===d&&s.materia===m));
+  if(alvo>0) db.sessoes.push({data:d,materia:m,minutos:alvo,quando:new Date().toISOString()});
+  salvar(); renderRegistro(); atualizarTudo();
+}
+function apagarSessao(i){ db.sessoes.splice(i,1); salvar(); renderRegistro(); atualizarTudo(); }
+
+/* ============================================================ QUESTÕES */
+function popularSelects(){
+  document.getElementById("q-materia").innerHTML=nomesMaterias().map(m=>`<option>${m}</option>`).join("");
+  atualizarSelectAssuntos();
+  document.getElementById("q-data").value=hoje();
+}
+function topicosDe(m){ const d=disciplinas().find(x=>x.nome===m); return d?d.topicos:[]; }
+function atualizarSelectAssuntos(){
+  document.getElementById("q-assunto").innerHTML=topicosDe(document.getElementById("q-materia").value).map(t=>`<option>${t}</option>`).join("");
+}
+function lancarQuestoes(){
+  const data=document.getElementById("q-data").value||hoje();
+  const materia=document.getElementById("q-materia").value;
+  const assunto=document.getElementById("q-assunto").value;
+  const total=parseInt(document.getElementById("q-total").value||"0",10);
+  const acertos=parseInt(document.getElementById("q-acertos").value||"0",10);
+  const msg=document.getElementById("q-msg");
+  if(total<=0){ msg.textContent="Informe quantas questões."; return; }
+  if(acertos<0||acertos>total){ msg.textContent="Acertos inválido."; return; }
+  db.questoes.push({data,materia,assunto,total,acertos}); salvar();
+  document.getElementById("q-total").value=""; document.getElementById("q-acertos").value="";
+  msg.textContent=`Registrado: ${assunto} — ${acertos}/${total}.`;
+  renderHistorico(); renderPrioridades(); desenharTudo();
+}
+function renderHistorico(){
+  const box=document.getElementById("q-historico");
+  if(!db.questoes.length){ box.textContent="Nenhuma bateria."; return; }
+  box.innerHTML=[...db.questoes].reverse().slice(0,20).map((q,i)=>{
+    const idx=db.questoes.length-1-i;
+    return `<div class="item"><span>${q.assunto} <span class="tag">${q.materia}</span><br>
+      <span style="color:#6B7280">${q.data} · ${q.acertos}/${q.total}</span></span><button onclick="apagarQuestao(${idx})">✕</button></div>`;
+  }).join("");
+}
+function apagarQuestao(i){ db.questoes.splice(i,1); salvar(); renderHistorico(); renderPrioridades(); desenharTudo(); }
+
+/* ============================================================ PRIORIDADE */
+function statsPorAssunto(){
+  const m={};
+  db.questoes.forEach(q=>{ const k=q.materia+"|"+q.assunto;
+    if(!m[k]) m[k]={materia:q.materia,assunto:q.assunto,total:0,acertos:0};
+    m[k].total+=q.total; m[k].acertos+=q.acertos; });
+  return Object.values(m);
+}
+function pesoMateria(nome){ const d=disciplinas(), s=d.reduce((a,x)=>a+(db.pesos[x.nome]||1),0)||1; return (db.pesos[nome]||1)/s; }
+function ranking(){
+  return statsPorAssunto().filter(s=>s.total>=5)
+    .map(s=>({...s,dif:1-s.acertos/s.total,peso:pesoMateria(s.materia)}))
+    .map(s=>({...s,prio:s.peso*s.dif*1000})).sort((a,b)=>b.prio-a.prio);
+}
+function renderPrioridades(){
+  const rk=ranking(), box=document.getElementById("ranking");
+  box.innerHTML=rk.length?rk.slice(0,15).map((s,i)=>{
+    const cor=s.dif>=0.6?"#E86A6A":s.dif>=0.3?"#F5D06B":"#63BE7B";
+    return `<div class="prio"><span class="bolinha" style="background:${cor}"></span>
+      <span class="nome">${i+1}. ${s.assunto}<br><span style="color:#6B7280;font-size:10.5px">${s.materia} · ${s.acertos}/${s.total}</span></span>
+      <span class="val" style="color:${cor}">${Math.round(s.dif*100)}%</span></div>`;
+  }).join(""):`<div class="mini">Nenhum assunto com 5 questões ainda.</div>`;
+  const porM={};
+  db.questoes.forEach(q=>{ if(!porM[q.materia]) porM[q.materia]={t:0,a:0}; porM[q.materia].t+=q.total; porM[q.materia].a+=q.acertos; });
+  document.getElementById("porMateria").innerHTML=Object.entries(porM).map(([m,v])=>{
+    const p=Math.round(v.a/v.t*100), cor=p>=70?"#63BE7B":p>=50?"#F5D06B":"#E86A6A";
+    return `<div class="prio"><span class="nome">${m}</span><span class="val" style="color:${cor}">${v.a}/${v.t} · ${p}%</span></div>`;
+  }).join("")||`<div class="mini">Sem dados.</div>`;
+}
+
+/* ============================================================ GRÁFICOS */
+function prepararCanvas(cv){
+  const dpr=window.devicePixelRatio||1, w=cv.clientWidth||320, h=parseInt(cv.getAttribute("height"),10)||160;
+  cv.style.height=h+"px"; cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr);
+  const ctx=cv.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+  return {ctx,w,h};
+}
+function cantos(ctx,x,y,w,h,r){
+  r=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+function desenharBarras(cv,itens){
+  // horizontais: nomes longos, barras arredondadas alternando navy e turquesa
+  const {ctx,w,h}=prepararCanvas(cv);
+  if(!itens.length){ ctx.fillStyle="#9CA3AF"; ctx.font="12px sans-serif"; ctx.fillText("Sem dados ainda",12,h/2); return; }
+  const max=Math.max(...itens.map(i=>i.valor),1);
+  const linhas=Math.min(itens.length,7);
+  const alturaLinha=Math.min(28,(h-18)/linhas);
+  const larguraLabel=Math.min(132,w*0.42);
+  ctx.font="11px sans-serif";
+  itens.slice(0,7).forEach((it,i)=>{
+    const y=12+i*alturaLinha;
+    const larg=Math.max(4,(w-larguraLabel-52)*(it.valor/max));
+    ctx.fillStyle="#EEF3F8";
+    cantos(ctx,larguraLabel,y-9,(w-larguraLabel-52),14,7); ctx.fill();
+    ctx.fillStyle = i%2===0 ? "#0A2240" : "#30A6B5";
+    cantos(ctx,larguraLabel,y-9,larg,14,7); ctx.fill();
+    ctx.fillStyle="#12233A";
+    let nome=it.label; if(nome.length>21) nome=nome.slice(0,20)+"…";
+    ctx.fillText(nome,2,y+2);
+    ctx.fillStyle="#7A8AA0"; ctx.textAlign="right";
+    ctx.fillText(it.valor.toFixed(1).replace(".",","),w-2,y+2); ctx.textAlign="left";
+  });
+}
+function desenharColunas(cv,itens,meta){
+  // verticais: semanas e progresso, como na arte do celular
+  const {ctx,w,h}=prepararCanvas(cv);
+  if(!itens.length){ ctx.fillStyle="#9CA3AF"; ctx.font="12px sans-serif"; ctx.fillText("Sem dados ainda",12,h/2); return; }
+  const padB=22,padT=18,padL=10,padR=10;
+  const base=h-padB, topo=padT;
+  const max=Math.max(meta||0,...itens.map(i=>i.valor),1);
+  ctx.strokeStyle="#EDF2F7"; ctx.lineWidth=1;
+  for(let g=1;g<=3;g++){
+    const y=base-(g/3)*(base-topo);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(w-padR,y); ctx.stroke();
+  }
+  const n=itens.length, esp=(w-padL-padR)/Math.max(1,n), larg=Math.min(20,esp*0.46);
+  itens.forEach((it,i)=>{
+    const x=padL+esp*i+(esp-larg)/2;
+    const alt=Math.max(3,(it.valor/max)*(base-topo));
+    const y=base-alt;
+    ctx.fillStyle = i%2===0 ? "#0A2240" : "#30A6B5";
+    cantos(ctx,x,y,larg,alt,Math.min(7,larg/2)); ctx.fill();
+    ctx.fillStyle="#7A8AA0"; ctx.font="9.5px sans-serif"; ctx.textAlign="center";
+    ctx.fillText(it.label, x+larg/2, h-8);
+  });
+  if(meta>0){
+    const y=base-(meta/max)*(base-topo);
+    ctx.setLineDash([5,4]); ctx.strokeStyle="#C2A24E"; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(w-padR,y); ctx.stroke(); ctx.setLineDash([]);
+  }
+  ctx.textAlign="left";
+}
+function desenharTudo(){
+  if(document.getElementById("tab-painel").classList.contains("oculto")) return;
+  const porM={};
+  db.sessoes.forEach(s=>{ porM[s.materia]=(porM[s.materia]||0)+s.minutos/60; });
+  desenharBarras(document.getElementById("cvHoras"),
+    Object.entries(porM).map(([m,v])=>({label:m,valor:v})).sort((a,b)=>b.valor-a.valor));
+  document.getElementById("cvHorasMsg").textContent=Object.keys(porM).length?"Horas acumuladas por matéria.":"Estude com o cronômetro para ver o gráfico.";
+
+  const p=planoAtivo(), inicio=p?p.inicio:"2026-11-23", semanas=[];
+  for(let i=0;i<10;i++){
+    let feito=0, meta=0;
+    for(let k=0;k<7;k++){
+      const d=maisDias(inicio,i*7+k);
+      feito+=minutosDoDia(d)/60; meta+=metaDoDia(d);
+    }
+    if(meta>0||feito>0) semanas.push({label:"S"+(i+1),valor:feito,meta});
+  }
+  const metas=semanas.map(s=>s.meta).filter(v=>v>0);
+  const media=metas.length?metas.reduce((a,b)=>a+b,0)/metas.length:0;
+  desenharColunas(document.getElementById("cvSemana"),semanas.map(s=>({label:s.label,valor:s.valor})),media);
+
+  const rk=ranking().slice(0,6);
+  desenharBarras(document.getElementById("cvErros"),rk.map(s=>({label:s.assunto,valor:s.dif*100})));
+  document.getElementById("cvErrosMsg").textContent=rk.length?"Percentual de erro por assunto (maior = mais urgente).":"Lance questões para ver onde erra mais.";
+}
+
+/* ============================================================ ROTINA (UI) */
+function renderDias(){
+  const mk=(id,sel)=>{
+    document.getElementById(id).innerHTML=[0,1,2,3,4,5,6].map(d=>
+      `<button class="${sel.includes(d)?'on':''}" onclick="toggleDia('${id}',${d})">${NOMES_DIA[d]}</button>`).join("");
+  };
+  mk("r-trab-dias",db.rotina.trabDias||[1,2,3,4,5]);
+  mk("r-facul-dias",db.rotina.faculDias||[]);
+  mk("r-treino-dias",db.rotina.treinoDias||[]);
+  mk("r-folgas",db.rotina.folgas||[]);
+}
+function toggleDia(id,d){
+  const mapa={"r-trab-dias":"trabDias","r-facul-dias":"faculDias","r-treino-dias":"treinoDias","r-folgas":"folgas"};
+  const campo=mapa[id];
+  const atual=db.rotina[campo]||[];
+  db.rotina[campo]=atual.includes(d)?atual.filter(x=>x!==d):[...atual,d].sort();
+  renderDias(); renderRotinaTabela();
+}
+function renderRotinaForm(){
+  const r=db.rotina;
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v; };
+  set("r-dormir",r.dormir); set("r-trab-ini",r.trabIni); set("r-trab-fim",r.trabFim);
+  set("r-extra",r.extra); set("r-facul-ini",r.faculIni); set("r-facul-fim",r.faculFim);
+  set("r-desloc",r.desloc); set("r-treino-dur",r.treinoDur); set("r-outras",r.outras||"");
+  set("r-ferias-ini",r.feriasIni||""); set("r-ferias-fim",r.feriasFim||"");
+  set("p-prova",r.prova||"");
+  renderDias();
+}
+function salvarRotina(){
+  const g=id=>document.getElementById(id).value;
+  db.rotina = Object.assign({},db.rotina,{
+    configurada:true, dormir:parseFloat(g("r-dormir"))||8,
+    trabIni:g("r-trab-ini"), trabFim:g("r-trab-fim"), extra:parseInt(g("r-extra"))||0,
+    faculIni:g("r-facul-ini"), faculFim:g("r-facul-fim"),
+    desloc:parseInt(g("r-desloc"))||0, treinoDur:parseInt(g("r-treino-dur"))||0,
+    outras:g("r-outras"), feriasIni:g("r-ferias-ini"), feriasFim:g("r-ferias-fim"),
+    prova:g("p-prova")
+  });
+  salvar(); renderRotinaTabela(); atualizarJanela(); atualizarTudo();
+  document.getElementById("r-msg").textContent="Rotina salva. As metas diárias já mudaram.";
+}
+function renderRotinaTabela(){
+  const disp=disponibilidade(), tabela=document.getElementById("r-tabela");
+  const total=disp.reduce((a,b)=>a+b,0);
+  tabela.innerHTML=`<table><tr><th>Dia</th><th>Horas livres</th></tr>`+
+    [1,2,3,4,5,6,0].map(d=>`<tr><td>${NOMES_DIA[d]}</td><td>${disp[d].toString().replace(".",",")} h</td></tr>`).join("")+
+    `</table><div class="mini">Total livre na semana: <b>${total.toFixed(1).replace(".",",")} h</b> (descontando sono, trabalho, faculdade, treino e deslocamento).</div>`;
+}
+function atualizarJanela(){
+  const j=janela();
+  document.getElementById("p-janela").textContent = `${j.inicio.split("-").reverse().join("/")} → ${j.fim.split("-").reverse().join("/")}`;
+  document.getElementById("p-dias-lbl").textContent = `${j.dias} dias · ${j.motivo}`;
+  document.getElementById("p-msg2").textContent = j.motivo;
+}
+/* ============================================================ ANEXAR EDITAL */
+async function anexarEdital(input, idTextarea, idMsg){
+  const arq = input.files[0];
+  const msg = document.getElementById(idMsg);
+  if(!arq) return;
+  const nome = arq.name.toLowerCase();
+  msg.textContent = "Lendo " + arq.name + "...";
+  try{
+    if(nome.endsWith(".pdf")){
+      const buf = await arq.arrayBuffer();
+      let texto = "";
+      try{
+        texto = await extrairComPdfJS(buf);          // biblioteca oficial, melhor qualidade
+      }catch(e){
+        texto = await extrairTextoPDF(buf);          // extrator simples, reserva
+      }
+      if(!texto || texto.length < 200){
+        msg.textContent = "Não consegui extrair texto deste PDF (pode ser digitalizado). " +
+          "Abra o PDF, copie o texto e cole na caixa.";
+        return;
+      }
+      document.getElementById(idTextarea).value = texto;
+      msg.textContent = "PDF lido: " + texto.length.toLocaleString("pt-BR") + " caracteres. Revise e toque em Ler edital.";
+    } else {
+      const texto = await arq.text();
+      document.getElementById(idTextarea).value = texto;
+      msg.textContent = "Arquivo lido: " + texto.length.toLocaleString("pt-BR") + " caracteres.";
+    }
+  }catch(e){
+    msg.textContent = "Falhou ao ler o arquivo: " + e.message;
+  }finally{
+    input.value = "";
+  }
+}
+
+/* leitura de PDF com a biblioteca PDF.js (mesma do Firefox) */
+async function extrairComPdfJS(buffer){
+  if(!window.__pdfjs){
+    window.__pdfjs = await import("./pdf.min.mjs");
+    window.__pdfjs.GlobalWorkerOptions.workerSrc = "./pdf.worker.min.mjs";
+  }
+  const lib = window.__pdfjs;
+  const doc = await lib.getDocument({ data: new Uint8Array(buffer) }).promise;
+  let texto = "";
+  for(let i=1; i<=doc.numPages; i++){
+    const pagina = await doc.getPage(i);
+    const conteudo = await pagina.getTextContent();
+    texto += conteudo.items.map(it=>(it.str || "")).join(" ") + "\n";
+    if(texto.length > 500000) break;
+  }
+  return texto.replace(/[ \t]{2,}/g," ").replace(/\n{3,}/g,"\n\n").trim();
+}
+
+/* extrator mínimo de texto de PDF, roda no próprio aparelho */
+async function extrairTextoPDF(buffer){
+  const bytes = new Uint8Array(buffer);
+  const latin1 = [];
+  for(let i=0;i<bytes.length;i++) latin1.push(String.fromCharCode(bytes[i]));
+  const bruto = latin1.join("");
+
+  const partes = [];
+  const re = /stream\r?\n/g;
+  let m;
+  while((m = re.exec(bruto)) !== null){
+    const ini = m.index + m[0].length;
+    const fim = bruto.indexOf("endstream", ini);
+    if(fim < 0) continue;
+    let trecho = bruto.slice(ini, fim);
+    let texto = "";
+    try{
+      texto = await inflar(trecho);
+    }catch(e){
+      texto = trecho;                      // alguns streams não são comprimidos
+    }
+    if(texto && /BT[\s\S]{0,2000}ET/.test(texto)){
+      partes.push(extrairDeTextoOperadores(texto));
+    }
+    if(partes.join("").length > 400000) break;
+  }
+  return partes.join("\n").replace(/[ \t]{2,}/g," ").replace(/\n{3,}/g,"\n\n").trim();
+}
+
+async function inflar(trecho){
+  let bruto = new Uint8Array(trecho.length);
+  for(let i=0;i<trecho.length;i++) bruto[i] = trecho.charCodeAt(i) & 0xFF;
+  // o stream costuma vir com \r\n sobrando antes de "endstream": o navegador rejeita bytes extras
+  let fim = bruto.length;
+  while(fim > 0 && (bruto[fim-1] === 0x0A || bruto[fim-1] === 0x0D || bruto[fim-1] === 0x20)) fim--;
+  bruto = bruto.subarray(0, fim);
+  if(typeof DecompressionStream === "undefined") throw new Error("sem suporte");
+  const ds = new DecompressionStream("deflate");
+  const stream = new Blob([bruto]).stream().pipeThrough(ds);
+  return await new Response(stream).text();
+}
+
+function extrairDeTextoOperadores(conteudo){
+  const saida = [];
+  const re = /\(((?:\\.|[^\\()])*)\)\s*(Tj|TJ|'|")/g;
+  let m;
+  while((m = re.exec(conteudo)) !== null){
+    let s = m[1]
+      .replace(/\\([nrtbf])/g,(x,c)=>({n:"\n",r:"\r",t:"\t",b:"",f:""}[c]||""))
+      .replace(/\\([()\\])/g,"$1")
+      .replace(/\\([0-7]{1,3})/g,(x,o)=>String.fromCharCode(parseInt(o,8)));
+    saida.push(s);
+  }
+  return saida.join(" ").replace(/[^\x20-\x7E\x80-\xFF\n]/g," ");
+}
+
+/* procura a data da prova no texto do edital e devolve AAAA-MM-DD (ou null) */
+function extrairDataProva(texto){
+  if(!texto) return null;
+  const baixo=texto.toLowerCase();
+  const datas=baixo.match(/(\d{2})\/(\d{2})\/(\d{4})/g);
+  if(!datas) return null;
+  let escolhida=null, melhor=-1;
+  datas.forEach(d=>{
+    const idx=baixo.indexOf(d);
+    const ctx=baixo.slice(Math.max(0,idx-120), idx+120);
+    let peso=0;
+    if(/prova objetiva|prova escrita|data da prova|aplica[çc][ãa]o da prova/.test(ctx)) peso+=3;
+    else if(/prova|aplica|realiza/.test(ctx)) peso+=2;
+    if(peso>melhor){ melhor=peso; escolhida=d; }
+  });
+  if(melhor<=0) return null;          // nenhuma data ligada a prova
+  const [dd,mm,aaaa]=escolhida.split("/");
+  const y=parseInt(aaaa,10), m=parseInt(mm,10), d=parseInt(dd,10);
+  if(m<1||m>12||d<1||d>31||y<2020||y>2100) return null;
+  return `${aaaa}-${mm}-${dd}`;
+}
+function formatarBR(isoData){
+  if(!isoData) return "—";
+  const [a,m,d]=isoData.split("-");
+  return `${d}/${m}/${a}`;
+}
+function extrairProva(){
+  const txt=document.getElementById("edital").value||"";
+  const msg=document.getElementById("edital-msg");
+  if(!txt){ msg.textContent="Cole o edital primeiro."; return; }
+  const data=extrairDataProva(txt);
+  if(!data){ msg.textContent="Não achei data ligada à prova no texto. Preencha à mão."; return; }
+  document.getElementById("p-prova").value=data;
+  db.rotina.prova=data; salvar(); atualizarJanela();
+  msg.textContent=`Data encontrada: ${formatarBR(data)}. Confira no campo acima.`;
+}
+
+/* ============================================================ PLANOS */
+function uid(){ return "p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+function planoAtivo(){ return db.planos.find(p=>p.id===db.ativoId)||null; }
+function renderChips(){
+  const box=document.getElementById("chipsPlanos");
+  if(!db.planos.length){ box.innerHTML=`<span class="mini">—</span>`; document.getElementById("planoInfo").textContent="Nenhum plano ainda."; return; }
+  box.innerHTML=db.planos.map(p=>`<button class="chip ${p.id===db.ativoId?'on':''}" onclick="ativarPlano('${p.id}')">${p.nome}</button>`).join("");
+  const p=planoAtivo();
+  document.getElementById("planoInfo").textContent = p
+    ? `${p.nome} · ${p.inicio.split("-").reverse().join("/")} a ${p.fim.split("-").reverse().join("/")} · ${p.dias} dias · ${p.horasSemana.toString().replace(".",",")} h/sem · ${p.origem}`
+    : "Nenhum plano ativo.";
+}
+function ativarPlano(id){ db.ativoId=id; salvar(); renderChips(); renderSemana(); desenharTudo(); }
+function renderListaPlanos(){
+  const box=document.getElementById("listaPlanos");
+  if(!db.planos.length){ box.textContent="Nenhum plano ainda."; return; }
+  box.innerHTML=db.planos.map(p=>`<div class="item"><span>${p.id===db.ativoId?"✅ ":""}<b>${p.nome}</b><br>
+    <span style="color:#6B7280">${p.dias} dias · ${p.horasSemana.toString().replace(".",",")} h/sem · ${p.origem}</span></span>
+    <span><button class="btn mini sec" onclick="ativarPlano('${p.id}')">usar</button>
+    <button onclick="apagarPlano('${p.id}')">✕</button></span></div>`).join("");
+}
+function apagarPlano(id){
+  if(!confirm("Apagar este plano?")) return;
+  db.planos=db.planos.filter(p=>p.id!==id);
+  if(db.ativoId===id) db.ativoId=db.planos[0]?db.planos[0].id:null;
+  salvar(); renderListaPlanos(); renderChips(); renderSemana(); desenharTudo();
+}
+
+function montarCiclo(inicio, usarProgresso){
+  const disc=disciplinas();
+  const pesos = usarProgresso ? pesosAjustados() : db.pesos;
+  const somaPesos=disc.reduce((a,d)=>a+(pesos[d.nome]||1),0)||1;
+  const disp=disponibilidade(), diasEstudo=[1,2,3,4,5,6].filter(d=>disp[d]>0);
+  const ciclo={}; [1,2,3,4,5,6].forEach(d=>ciclo[d]=[]);
+  const blocos=[];
+  disc.forEach(d=>{
+    const horasSem=disponibilidade().reduce((a,_,i)=>a+(diasEstudo.includes(i)?disp[i]:0),0);
+    let horas=horasSem*((pesos[d.nome]||1)/somaPesos), i=0, guard=0;
+    while(horas>0.2 && guard<80){
+      const h=Math.min(1.5,horas);
+      const praticados = subtopicosPraticados();
+      const ordenados = [...d.topicos].sort((a,b)=>{
+        const pa = (praticados[d.nome+"|"+a]||0) > 0 ? 1 : 0;
+        const pb = (praticados[d.nome+"|"+b]||0) > 0 ? 1 : 0;
+        return pa - pb;
+      });
+      blocos.push({materia:d.nome,topico:ordenados[i%Math.max(1,ordenados.length)],horas:+h.toFixed(1)});
+      horas-=h; i++; guard++;
+    }
+  });
+  blocos.sort((a,b)=>b.horas-a.horas);
+  let dia=0;
+  blocos.forEach(b=>{
+    let t=0;
+    while(t<7){
+      const d=diasEstudo[dia%diasEstudo.length], usado=(ciclo[d]||[]).reduce((a,x)=>a+x.horas,0);
+      if(usado+b.horas<=disp[d]+0.01){ ciclo[d].push(b); break; }
+      dia++; t++;
+    }
+  });
+  return ciclo;
+}
+function novoPlanoRegras(){
+  const j=janela();
+  if(horasSemana(j.inicio) < 1){
+    document.getElementById("ia-msg").textContent =
+      "Sua rotina não deixa horas livres. Revise o passo 1 (folgas, trabalho, faculdade).";
+    return;
+  }
+  const ciclo=montarCiclo(j.inicio);
+  const plano={id:uid(),nome:"Plano "+(db.planos.length+1)+" (regras)",inicio:j.inicio,fim:j.fim,dias:j.dias,
+    horasSemana:horasSemana(j.inicio),ciclo,origem:"regras",criado:new Date().toISOString()};
+  db.planos.push(plano); db.ativoId=plano.id; salvar();
+  renderListaPlanos(); renderChips(); renderSemana(); desenharTudo();
+  document.getElementById("ia-msg").textContent="Plano criado e ativado.";
+}
+function renderSemana(){
+  const p=planoAtivo(), box=document.getElementById("semana");
+  if(!p){ box.textContent="Nenhum plano ativo."; return; }
+  const nomes=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+  box.innerHTML=[1,2,3,4,5,6].map(d=>{
+    const itens=p.ciclo[d]||[];
+    if(!itens.length) return "";
+    return `<div class="dia"><b>${nomes[d]}</b>`+itens.map(i=>
+      `<div>• ${i.materia} — ${i.topico} <span style="color:#6B7280">(${i.horas.toString().replace(".",",")} h)</span></div>`).join("")+`</div>`;
+  }).join("")||"Plano vazio.";
+}
+
+/* ============================================================ EDITAL */
+const CONHECIDAS = Object.keys(PADRAO);
+function parseEdital(txt){
+  const linhas=txt.split(/\n/).map(l=>l.trim()).filter(Boolean);
+  const disc=[]; let atual=null;
+  linhas.forEach(l=>{
+    const limpa=l.replace(/^[•\-*]\s*/,"").replace(/^\d+[\.\)]\s*/,"");
+    const conhecida=CONHECIDAS.find(c=>limpa.toLowerCase().startsWith(c.toLowerCase())&&limpa.length<c.length+40);
+    if(conhecida){
+      atual={nome:conhecida,topicos:[]}; disc.push(atual);
+      const resto=limpa.slice(conhecida.length).replace(/^[:\-\s]+/,"");
+      if(resto.length>3) atual.topicos.push(resto);
+      return;
+    }
+    if(atual && /^[•\-*]|^\d+[\.\)]/.test(l) && limpa.length>2 && !atual.topicos.includes(limpa))
+      atual.topicos.push(limpa);
+  });
+  if(!disc.length) CONHECIDAS.forEach(c=>{ if(txt.toLowerCase().includes(c.toLowerCase())) disc.push({nome:c,topicos:PADRAO[c].slice()}); });
+  return disc;
+}
+
+function lerEdital(){
+  const txt=document.getElementById("edital").value||"";
+  const msg=document.getElementById("edital-msg");
+  if(txt.trim().length<40){ msg.textContent="Cole um texto maior."; return; }
+  db.edital.texto=txt;
+  const disc=parseEdital(txt);
+  db.edital.disciplinas=disc;
+  db.pesos={}; disc.forEach(d=>db.pesos[d.nome]=Math.max(1,d.topicos.length));
+  salvar(); renderPesos(); renderMaterias(); popularSelects();
+  const tot=disc.reduce((a,d)=>a+d.topicos.length,0);
+  msg.textContent=`${disc.length} disciplinas e ${tot} submatérias reconhecidas.`;
+}
+function renderPesos(){
+  document.getElementById("pesos").innerHTML=disciplinas().map(d=>
+    `<div class="linha"><label>${d.nome} <span class="tag">${d.topicos.length}</span></label>
+      <input type="number" min="1" value="${db.pesos[d.nome]||1}" onchange="mudarPeso('${d.nome.replace(/'/g,"\\'")}',this.value)"></div>`).join("")+
+    `<div class="mini">Peso = nº de submatérias reconhecidas.</div>`;
+}
+function mudarPeso(n,v){ db.pesos[n]=Math.max(1,parseInt(v||"1",10)); salvar(); renderPesos(); }
+
+/* ============================================================ PROGRESSO E ATUALIZAÇÃO */
+function horasPorMateria(){
+  const m={};
+  db.sessoes.forEach(s=>{ m[s.materia]=(m[s.materia]||0)+s.minutos/60; });
+  return m;
+}
+function progressoMateria(nome){
+  const d=disciplinas().find(x=>x.nome===nome);
+  const topicos=d? d.topicos.length : 1;
+  const praticados=new Set(db.questoes.filter(q=>q.materia===nome).map(q=>q.assunto)).size;
+  const horas=horasPorMateria()[nome]||0;
+  const porHoras=Math.min(1, horas / Math.max(6, 1.5*topicos));   // ~1,5 h por submatéria
+  const porQuestoes=Math.min(1, praticados/Math.max(1,topicos));
+  return Math.max(porHoras, porQuestoes*0.85);
+}
+function pesosAjustados(){
+  const out={};
+  disciplinas().forEach(d=>{
+    const base=db.pesos[d.nome]||1;
+    const prog=progressoMateria(d.nome);
+    out[d.nome]=Math.max(0.5, base*(1-prog)+base*0.15);
+  });
+  return out;
+}
+function subtopicosPraticados(){
+  const s={};
+  db.questoes.forEach(q=>{ s[q.materia+"|"+q.assunto]=(s[q.materia+"|"+q.assunto]||0)+q.total; });
+  return s;
+}
+function compararEdital(){
+  const txt=document.getElementById("editalNovo").value||"";
+  const msg=document.getElementById("upd-msg");
+  const diffBox=document.getElementById("diff");
+  if(txt.trim().length<40){ msg.textContent="Cole o edital atualizado primeiro."; return; }
+  const novo=parseEdital(txt);
+  if(!novo.length){ msg.textContent="Não consegui reconhecer disciplinas no texto novo."; return; }
+  const dataNova=extrairDataProva(txt);
+  const dataAtual=db.rotina.prova||"";
+  const mudouData = dataNova && dataNova !== dataAtual;
+  const atual=disciplinas();
+  const nomesAtual=atual.map(d=>d.nome), nomesNovo=novo.map(d=>d.nome);
+  const novasDisc=nomesNovo.filter(n=>!nomesAtual.includes(n));
+  const removidasDisc=nomesAtual.filter(n=>!nomesNovo.includes(n));
+  const linhas=[];
+  novo.forEach(d=>{
+    const velho=atual.find(x=>x.nome===d.nome);
+    if(!velho){ linhas.push(`<div style="color:#1F6B3A">+ disciplina nova: <b>${d.nome}</b> (${d.topicos.length} submatérias)</div>`); return; }
+    const novasT=d.topicos.filter(x=>!velho.topicos.includes(x));
+    const foraT=velho.topicos.filter(x=>!d.topicos.includes(x));
+    novasT.forEach(x=>linhas.push(`<div style="color:#1F6B3A">+ ${d.nome}: ${x}</div>`));
+    foraT.forEach(x=>linhas.push(`<div style="color:#9C2727">− ${d.nome}: ${x}</div>`));
+  });
+  removidasDisc.forEach(n=>linhas.push(`<div style="color:#9C2727">− disciplina removida: <b>${n}</b></div>`));
+  if(mudouData)
+    linhas.push(`<div style="color:#2E5496">↻ data da prova: <b>${formatarBR(dataAtual)} → ${formatarBR(dataNova)}</b></div>`);
+  else if(dataNova)
+    linhas.push(`<div style="color:#6B7280">data da prova: mantida em ${formatarBR(dataAtual)}</div>`);
+  else
+    linhas.push(`<div style="color:#6B7280">data da prova: não encontrada no texto novo (mantida ${formatarBR(dataAtual)})</div>`);
+  db._editalPendente={texto:txt, disciplinas:novo, prova: dataNova || null, mudouData: !!mudouData};
+  diffBox.innerHTML = linhas.length
+    ? linhas.join("")
+    : `<div style="color:#6B7280">Nenhuma diferença detectada nas disciplinas e submatérias.</div>`;
+  document.getElementById("btnAplicar").style.display="inline-block";
+  const tot=novo.reduce((a,d)=>a+d.topicos.length,0);
+  msg.textContent=`Edital novo: ${novo.length} disciplinas, ${tot} submatérias. ${linhas.length} mudança(s).`;
+}
+function aplicarAtualizacao(){
+  const pend=db._editalPendente;
+  if(!pend){ document.getElementById("upd-msg").textContent="Compare primeiro."; return; }
+  const antes=JSON.stringify(db.edital.disciplinas);
+  let avisoData="";
+  if(pend.mudouData && pend.prova){
+    const de=db.rotina.prova||"";
+    db.rotina.prova=pend.prova;
+    const el=document.getElementById("p-prova"); if(el) el.value=pend.prova;
+    avisoData=` Data da prova atualizada: ${formatarBR(de)} → ${formatarBR(pend.prova)}.`;
+  }
+  db.edital={texto:pend.texto, disciplinas:pend.disciplinas};
+  db.pesos={}; pend.disciplinas.forEach(d=>db.pesos[d.nome]=Math.max(1,d.topicos.length));
+  db.historicoEdital=db.historicoEdital||[];
+  db.historicoEdital.push({data:hoje(), antes, depois:JSON.stringify(pend.disciplinas)});
+  delete db._editalPendente;
+  salvar();
+  renderPesos(); renderMaterias(); popularSelects();
+  document.getElementById("diff").innerHTML="";
+  document.getElementById("btnAplicar").style.display="none";
+  document.getElementById("upd-msg").textContent="Edital atualizado."+avisoData+" Gerando plano novo sobre o que falta...";
+  atualizarJanela();
+  recalcularPlano();
+}
+function recalcularPlano(){
+  const j=janela();
+  const ciclo=montarCiclo(j.inicio, true);
+  const plano={id:uid(), nome:"Plano v"+(db.planos.length+1)+" (pós-atualização)",
+    inicio:j.inicio, fim:j.fim, dias:j.dias, horasSemana:horasSemana(j.inicio),
+    ciclo, origem:"recálculo", criado:new Date().toISOString()};
+  db.planos.push(plano); db.ativoId=plano.id; salvar();
+  renderListaPlanos(); renderChips(); renderSemana(); desenharTudo();
+  const prog = disciplinas().map(d=>`${d.nome.split(" ").slice(-1)[0]} ${Math.round(progressoMateria(d.nome)*100)}%`).join(" · ");
+  document.getElementById("upd-msg").textContent =
+    "Plano recalculado e ativado. Progresso considerado: "+prog;
+}
+
+/* ============================================================ IA */
+function salvarChave(){
+  db.apiKey=document.getElementById("apiKey").value.trim();
+  db.apiModel=document.getElementById("apiModel").value.trim()||"gemini-flash-latest";
+  salvar();
+  document.getElementById("ia-msg").textContent=db.apiKey?"Chave salva neste aparelho.":"Chave vazia.";
+}
+function apagarChave(){ db.apiKey=""; salvar(); document.getElementById("apiKey").value=""; document.getElementById("ia-msg").textContent="Chave apagada."; }
+
+async function gerarComIA(){
+  const msg=document.getElementById("ia-msg");
+  if(!db.apiKey){ msg.textContent="Cole sua chave e salve primeiro."; return; }
+  if(!db.edital.disciplinas.length){ msg.textContent="Leia o edital primeiro (passo 3)."; return; }
+  if(!db.rotina.configurada){ msg.textContent="Salve sua rotina primeiro (passo 1)."; return; }
+  if(horasSemana(janela().inicio) < 1){ msg.textContent="Sua rotina não deixa horas livres. Revise o passo 1."; return; }
+
+  const j=janela(), disp=disponibilidade();
+  const feriadosNoPeriodo=[];
+  for(let i=0;i<j.dias;i++){ const d=maisDias(j.inicio,i); if(FERIADOS.includes(d)) feriadosNoPeriodo.push(d); }
+
+  const prompt=`Você é um planejador de estudos para concursos públicos brasileiros.
+Monte um ciclo semanal em JSON puro, sem texto fora do JSON.
+
+Contexto:
+- Prova em: ${db.rotina.prova||"não informada"}.
+- Período do plano: ${j.inicio} a ${j.fim} (${j.dias} dias).
+- Horas livres por dia da semana: ${JSON.stringify(disp)} (índice 0=domingo).
+- Dias de folga: ${JSON.stringify(db.rotina.folgas)}.
+- Feriados no período: ${JSON.stringify(feriadosNoPeriodo)}.
+- Outras atividades: ${db.rotina.outras||"nenhuma"}.
+
+Regras:
+- Domingos e feriados: nenhum bloco.
+- Cada dia deve somar no máximo as horas livres informadas para aquele dia da semana.
+- Blocos de 1 a 1,5 h.
+- Distribua as disciplinas proporcionalmente ao peso e à dificuldade medida (quem erra mais recebe mais tempo).
+- Use as submatérias fornecidas; não invente.
+- Formato exato:
+{"nome":"Plano IA 1","inicio":"${j.inicio}","fim":"${j.fim}","dias":${j.dias},
+ "ciclo":{"1":[{"materia":"...","topico":"...","horas":1.5}],"2":[],"3":[],"4":[],"5":[],"6":[],"0":[]}}
+
+Disciplinas (peso e submatérias): ${JSON.stringify(disciplinas().map(d=>({nome:d.nome,peso:db.pesos[d.nome]||1,sub:d.topicos})))}
+Dificuldade medida (1 = erra tudo): ${JSON.stringify(statsPorAssunto().map(s=>({a:s.assunto,d:+(1-s.acertos/s.total).toFixed(2)})))}`;
+
+  msg.textContent="Consultando a IA...";
+  let seg=0; const cron=setInterval(()=>{ seg++; msg.textContent="Consultando a IA... "+seg+"s"; },1000);
+
+  const modelos = [db.apiModel, "gemini-flash-lite-latest", "gemini-flash-latest"]
+    .filter((m,i,arr)=>m && arr.indexOf(m)===i);
+
+  let obj=null, usado="", erroFinal="";
+  try{
+    for(const modelo of modelos){
+      for(let tentativa=1; tentativa<=2 && !obj; tentativa++){
+        try{
+          const url=`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent?key=${encodeURIComponent(db.apiKey)}`;
+          const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:4096}})});
+          if(r.status===503 || r.status===429){
+            erroFinal="modelo ocupado ("+r.status+")";
+            await new Promise(res=>setTimeout(res,2500));
+            continue;
+          }
+          if(!r.ok){
+            erroFinal="HTTP "+r.status+" — "+(await r.text()).slice(0,140);
+            break;
+          }
+          const js=await r.json();
+          const texto=(js.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("");
+          const limpo=texto.replace(/```json/g,"").replace(/```/g,"").trim();
+          const parsed=JSON.parse(limpo.slice(limpo.indexOf("{"),limpo.lastIndexOf("}")+1));
+          if(!parsed.ciclo) throw new Error("resposta sem ciclo");
+          obj=parsed; usado=modelo;
+        }catch(e){
+          erroFinal=e.message;
+          break;
+        }
+      }
+      if(obj) break;
+    }
+    if(!obj) throw new Error(erroFinal||"sem resposta");
+
+    const alvo = horasSemana(j.inicio);
+    const ciclo = normalizarCiclo(obj.ciclo, alvo);
+    const totalFinal = Object.values(ciclo).flat().reduce((a,b)=>a+b.horas,0);
+    const plano={id:uid(),nome:obj.nome||("Plano IA "+(db.planos.length+1)),
+      inicio:obj.inicio||j.inicio,fim:obj.fim||j.fim,dias:obj.dias||j.dias,
+      horasSemana:+totalFinal.toFixed(1),ciclo,origem:"IA",criado:new Date().toISOString()};
+    db.planos.push(plano); db.ativoId=plano.id; salvar();
+    renderListaPlanos(); renderChips(); renderSemana(); desenharTudo();
+    msg.textContent=`Plano gerado por ${usado} e ajustado para ${totalFinal.toFixed(1).replace(".",",")} h/semana.`;
+  }catch(e){
+    msg.textContent="Falhou: "+e.message+" — use o botão de regras enquanto isso.";
+  }finally{ clearInterval(cron); }
+}
+
+/* garante que o plano da IA caiba nas horas reais e some o total previsto */
+function normalizarCiclo(ciclo, alvo){
+  const disp = disponibilidade();
+  const cap = {1:disp[1],2:disp[2],3:disp[3],4:disp[4],5:disp[5],6:disp[6]};
+  const out = {};
+  [1,2,3,4,5,6].forEach(d=>{
+    let arr = (ciclo[d]||[]).map(b=>({
+      materia:b.materia||"",
+      topico:b.topico||"",
+      horas:Math.min(1.5, Math.max(1, +(b.horas||1)))
+    })).filter(b=>b.materia);
+    let usado = arr.reduce((a,b)=>a+b.horas,0);
+    while(usado > cap[d] + 0.01 && arr.length){
+      const ult = arr[arr.length-1];
+      const excesso = usado - cap[d];
+      if(ult.horas - excesso < 1){ arr.pop(); usado -= ult.horas; }
+      else { ult.horas = +(ult.horas - excesso).toFixed(1); usado = cap[d]; }
+    }
+    out[d]=arr;
+  });
+
+  const total = ()=>Object.values(out).flat().reduce((a,b)=>a+b.horas,0);
+  const disc = disciplinas();
+  let giro = 0, guard = 0;
+
+  while(total() < alvo - 0.4 && guard < 100){
+    const livre = d => cap[d] - out[d].reduce((a,b)=>a+b.horas,0);
+    const d = [1,2,3,4,5,6].sort((a,b)=>livre(b)-livre(a))[0];
+    if(livre(d) < 0.9) break;
+    const h = Math.min(1.5, Math.floor(livre(d)*2)/2);
+    const mat = disc[giro % disc.length];
+    out[d].push({ materia:mat.nome, topico:mat.topicos[giro % Math.max(1,mat.topicos.length)],
+                  horas:h });
+    giro++; guard++;
+  }
+  guard = 0;
+  while(total() > alvo + 0.4 && guard < 100){
+    let maior=null, dia=null;
+    Object.entries(out).forEach(([d,arr])=>arr.forEach(b=>{
+      if(!maior || b.horas > maior.horas){ maior=b; dia=d; }
+    }));
+    if(!maior) break;
+    if(maior.horas > 1.2){ maior.horas = +(maior.horas - 0.5).toFixed(1); }
+    else { const arr = out[dia]; arr.splice(arr.indexOf(maior),1); }
+    guard++;
+  }
+  return out;
+}
+
+/* ============================================================ DADOS */
+function baixar(nome,texto){
+  const b=new Blob([texto],{type:"application/json"}), a=document.createElement("a");
+  a.href=URL.createObjectURL(b); a.download=nome; a.click();
+}
+function exportar(){
+  db.ultimaExportacao = hoje();
+  salvar();
+  baixar("estudos-tjsc-"+hoje()+".json",JSON.stringify(db,null,2));
+  resumo();
+}
+function importarPlano(input){
+  const f=input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+    const p=JSON.parse(r.result); if(!p.ciclo) throw new Error("sem ciclo");
+    const j=janela();
+    const plano={id:uid(),nome:p.nome||("Plano importado "+(db.planos.length+1)),
+      inicio:p.inicio||j.inicio,fim:p.fim||j.fim,dias:p.dias||j.dias,
+      horasSemana:p.horasSemana||horasSemana(p.inicio||j.inicio),
+      ciclo:normalizarCiclo(p.ciclo, horasSemana(p.inicio||j.inicio)),
+      origem:"importado",criado:new Date().toISOString()};
+    db.planos.push(plano); db.ativoId=plano.id; salvar();
+    renderListaPlanos(); renderChips(); renderSemana(); desenharTudo();
+  }catch(e){ alert("Plano inválido."); } };
+  r.readAsText(f);
+}
+function importar(input){
+  const f=input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+    const d=JSON.parse(r.result); db=Object.assign(db,d); salvar();
+    db.rotina=Object.assign({},ROTINA_PADRAO,db.rotina||{});
+    resetarPesos(); popularSelects(); renderMaterias(); renderPesos(); renderRotinaForm();
+    renderListaPlanos(); renderChips(); renderSemana(); atualizarJanela(); atualizarTudo();
+    alert("Importado.");
+  }catch(e){ alert("Arquivo inválido."); } };
+  r.readAsText(f);
+}
+function limpar(){
+  if(!confirm("Apagar tudo deste aparelho?")) return;
+  db={sessoes:[],questoes:[],edital:{texto:"",disciplinas:[]},pesos:{},planos:[],ativoId:null,
+      apiKey:"",apiModel:"gemini-flash-lite-latest",rotina:Object.assign({},ROTINA_PADRAO)};
+  resetarPesos(); salvar(); popularSelects(); renderMaterias(); renderPesos(); renderRotinaForm();
+  renderListaPlanos(); renderChips(); renderSemana(); atualizarJanela(); atualizarTudo();
+}
+function resumo(){
+  const min=db.sessoes.reduce((a,s)=>a+s.minutos,0);
+  let aviso="";
+  if(db.ultimaExportacao){
+    const dias=Math.round((new Date(hoje())-new Date(db.ultimaExportacao))/86400000);
+    if(dias>=7) aviso=` · ⚠️ último backup há ${dias} dias`;
+  } else {
+    aviso=" · ⚠️ nunca exportado";
+  }
+  document.getElementById("resumo-dados").textContent=
+    `${db.sessoes.length} sessões · ${(min/60).toFixed(1).replace(".",",")} h · ${db.questoes.length} baterias · ${db.planos.length} plano(s)${aviso}.`;
+}
+
+/* ============================================================ ABAS */
+function tab(n){
+  ["painel","crono","reg","quest","prio","plano"].forEach(x=>
+    document.getElementById("tab-"+x).classList.toggle("oculto",x!==n));
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===n));
+  if(n==="reg") renderRegistro();
+  if(n==="quest") renderHistorico();
+  if(n==="prio") renderPrioridades();
+  if(n==="plano"){ renderRotinaTabela(); renderListaPlanos(); renderPesos(); renderSemana(); resumo(); atualizarJanela(); }
+  if(n==="painel"){ renderChips(); desenharTudo(); }
+}
+function atualizarTudo(){
+  const d=hoje(), min=minutosDoDia(d), meta=metaDoDia(d)*60;
+  document.getElementById("kpi-est").textContent=(min/60).toFixed(2).replace(".",",")+" h";
+  document.getElementById("kpi-meta").textContent="meta "+String(metaDoDia(d)).replace(".",",")+" h";
+  const pct = meta ? Math.min(100, min/meta*100) : 0;
+  const anel = document.getElementById("anelHoje");
+  if(anel) anel.style.setProperty("--p", pct.toFixed(0));
+  document.getElementById("kpi-pct").textContent = (meta?(min/meta*100).toFixed(0):0)+"%";
+  document.getElementById("n-sessoes").textContent=db.sessoes.length;
+  document.getElementById("n-questoes").textContent=db.questoes.length;
+  const dd=new Date(d+"T12:00:00");
+  document.getElementById("cabecalho").textContent=dd.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})+(meta?"":" · descanso");
+  desenharTudo();
+}
+
+carregar();
+document.getElementById("data").value=hoje();
+document.getElementById("apiKey").value=db.apiKey||"";
+document.getElementById("apiModel").value=db.apiModel||"gemini-flash-lite-latest";
+carregarCronometro();
+renderRotinaForm(); popularSelects(); renderMaterias(); renderChips();
+renderListaPlanos(); renderPesos(); renderSemana(); atualizarJanela(); atualizarTudo();
+window.addEventListener("resize",()=>{ if(!document.getElementById("tab-painel").classList.contains("oculto")) desenharTudo(); });
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+{
+  "name": "SZM Concurseiro — Estudos TJSC",
+  "short_name": "SZM Concurseiro",
+  "description": "Cronometro, registro diario, questoes e plano de estudos gerado por IA.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A2240",
+  "theme_color": "#0A2240",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "id": "./",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": [
+    "education",
+    "productivity"
+  ],
+  "prefer_related_applications": false
+}
