@@ -106,12 +106,16 @@
         display:grid;place-items:center;padding:0 4px;font-style:normal}
   .overlay{position:fixed;inset:0;background:rgba(10,34,64,.55);z-index:90;display:flex;
            align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
+  .overlay.oculto{display:none}
   .sheet{background:#fff;width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:16px 14px 22px;
          max-height:82vh;overflow:auto;animation:sobe .25s ease}
   @keyframes sobe{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
   .sheet-topo{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
   .sheet-topo h3{margin:0;font-size:15px;color:var(--azul)}
   .sheet-topo button{border:0;background:#F1F5F9;width:32px;height:32px;border-radius:50%;font-size:14px}
+  .grupo-semana{font-size:10.5px;font-weight:800;color:#8A9AAF;text-transform:uppercase;
+                letter-spacing:.6px;margin:12px 0 6px}
+  .grupo-semana:first-child{margin-top:2px}
   .aviso-item{display:flex;gap:10px;align-items:flex-start;padding:11px;border-radius:14px;
               background:var(--cinza);margin-bottom:8px;border-left:4px solid var(--borda)}
   .aviso-item.erro{border-left-color:#C0392B;background:#FDF1F0}
@@ -181,6 +185,10 @@
       <button onclick="fecharAvisos()">✕</button>
     </div>
     <div id="listaAvisos"></div>
+    <button class="btn sec" id="maisAvisos" style="display:none;width:100%;margin-top:6px"
+            onclick="carregarAntigas()">Carregar avisos anteriores</button>
+    <div class="mini" style="text-align:center;margin-top:9px;color:#9AA9BA">
+      Avisos com mais de 14 dias são apagados automaticamente.</div>
   </div>
 </div>
 
@@ -315,7 +323,10 @@
     <div id="sub-edital" class="oculto">
       <div class="card">
         <h2>Prova e período</h2>
-        <div class="linha"><label>Data da prova</label><input type="date" id="p-prova"></div>
+        <div class="linha"><label>Início do plano</label>
+          <input type="date" id="p-inicio" onchange="mudarInicio(this.value)"></div>
+        <div class="linha"><label>Data da prova</label>
+          <input type="date" id="p-prova" onchange="mudarProva(this.value)"></div>
         <button class="btn sec mini" onclick="extrairProva()">Procurar no edital</button>
         <div class="kpi" style="margin-top:8px"><span id="p-janela">—</span><span id="p-dias-lbl">—</span></div>
         <div class="mini" id="p-msg2">Se a data já passou, o plano vira 180 dias a partir de hoje.</div>
@@ -421,6 +432,7 @@ const ROTINA_PADRAO = {
 
 let db = { sessoes:[], questoes:[], edital:{texto:"",disciplinas:[]},
            pesos:{}, planos:[], ativoId:null, apiKey:"", apiModel:"gemini-flash-lite-latest",
+           avisos:[], planoInicio:null,
            rotina: Object.assign({},ROTINA_PADRAO) };
 
 function carregar(){
@@ -428,6 +440,7 @@ function carregar(){
   db.sessoes=db.sessoes||[]; db.questoes=db.questoes||[]; db.planos=db.planos||[];
   db.edital=db.edital||{texto:"",disciplinas:[]};
   db.rotina=Object.assign({},ROTINA_PADRAO,db.rotina||{});
+  db.avisos = db.avisos || [];
   if(!db.pesos||!Object.keys(db.pesos).length) resetarPesos();
   if(db.planos.length && !db.ativoId) db.ativoId=db.planos[0].id;
 }
@@ -489,15 +502,33 @@ function metaDoDia(d){
 function janela(){
   const prova = db.rotina.prova || "";
   const hj = hoje();
-  let inicio = hj, fim, dias, motivo;
-  if(prova && prova > hj){
-    fim = prova; dias = Math.max(7, Math.round((new Date(fim)-new Date(inicio))/86400000));
+  let inicio = db.planoInicio || hj;
+  if(inicio < hj) inicio = hj;              // não faz sentido começar no passado
+  let fim, dias, motivo;
+  if(prova && prova > inicio){
+    fim = prova;
+    dias = Math.max(7, Math.round((new Date(fim) - new Date(inicio))/86400000));
     motivo = "até a prova";
   } else {
-    dias = 180; fim = maisDias(inicio, dias-1);
+    dias = 180;
+    fim = maisDias(inicio, dias-1);
     motivo = prova ? "data da prova já passou — 180 dias" : "sem data de prova — 180 dias";
   }
   return {inicio, fim, dias, motivo};
+}
+function mudarInicio(v){
+  db.planoInicio = (v && v >= hoje()) ? v : hoje();
+  const el = document.getElementById("p-inicio");
+  if(el) el.value = db.planoInicio;
+  salvar(); atualizarJanela();
+  const j = janela();
+  toast("Início " + formatarBR(j.inicio) + " · " + j.dias + " dias · até " + formatarBR(j.fim), "info");
+  renderHoje();
+}
+function mudarProva(v){
+  db.rotina.prova = v || "";
+  salvar(); atualizarJanela(); renderHoje();
+  if(v) toast("Prova em " + formatarBR(v), "info");
 }
 function horasSemana(inicio){
   let s=0; for(let i=0;i<7;i++) s+=metaDoDia(maisDias(inicio,i)); return +s.toFixed(1);
@@ -783,6 +814,8 @@ function renderRotinaForm(){
   set("r-desloc",r.desloc); set("r-treino-dur",r.treinoDur); set("r-outras",r.outras||"");
   set("r-ferias-ini",r.feriasIni||""); set("r-ferias-fim",r.feriasFim||"");
   set("p-prova",r.prova||"");
+  const pi = document.getElementById("p-inicio");
+  if(pi) pi.value = db.planoInicio || hoje();
   renderDias();
 }
 function salvarRotina(){
@@ -960,6 +993,20 @@ function extrairProva(){
 /* ============================================================ PLANOS */
 function uid(){ return "p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
 function planoAtivo(){ return db.planos.find(p=>p.id===db.ativoId)||null; }
+/* atraso real: compara apenas dias anteriores a hoje — o dia corrente ainda esta em curso */
+function situacaoPlano(){
+  const p = planoAtivo();
+  if(!p) return null;
+  const hj = hoje();
+  let planejado = 0, cumprido = 0, dias = 0;
+  for(let x = p.inicio; x < hj; x = maisDias(x,1)){
+    const horas = (p.ciclo[dow(x)] || []).reduce((a,b)=>a + b.horas, 0);
+    if(horas > 0) dias++;
+    planejado += horas;
+    cumprido += minutosDoDia(x)/60;
+  }
+  return {planejado, cumprido, dias, dif: cumprido - planejado};
+}
 function renderChips(){
   const box=document.getElementById("chipsPlanos");
   if(!db.planos.length){ box.innerHTML=`<span class="mini">—</span>`; document.getElementById("planoInfo").textContent="Nenhum plano ainda."; return; }
@@ -1403,25 +1450,19 @@ function gerarAvisos(){
 
   if(!db.rotina.configurada)
     out.push({n:"warn", ico:"⚙️", t:"Configure sua rotina",
-      d:"Sem ela, as horas livres do dia ficam no chute.",
-      b:"Configurar", f:()=>{ tab('plano'); subTab('rotina'); }});
+      d:"Sem ela, as horas livres do dia ficam no chute.", b:"Configurar", acao:"rotina"});
 
   if(!p)
     out.push({n:"warn", ico:"📅", t:"Nenhum plano ativo",
-      d:"Gere um plano para ter objetivos diários.",
-      b:"Gerar", f:()=>{ tab('plano'); subTab('edital'); }});
+      d:"Gere um plano para ter objetivos diários.", b:"Gerar", acao:"gerar"});
 
   if(p){
-    let planejado = 0, cumprido = 0;
-    for(let x = p.inicio; x <= hj; x = maisDias(x,1)){
-      planejado += (p.ciclo[dow(x)] || []).reduce((a,b)=>a + b.horas, 0);
-      cumprido += minutosDoDia(x)/60;
-    }
-    const dif = cumprido - planejado;
-    if(dif < -1)
+    const s = situacaoPlano();
+    const dif = s ? s.dif : 0;
+    if(s && s.dias > 0 && dif < -1)
       out.push({n:"erro", ico:"⏳", t:`${Math.abs(dif).toFixed(1).replace(".",",")} h atrás do plano`,
-        d:"Redistribuir o que falta resolve sem virar dívida.",
-        b:"Redistribuir", f:()=>{ tab('plano'); subTab('hoje'); rebalancear(); }});
+        d:`${s.dias} dia(s) no plano até ontem. Redistribuir resolve sem virar dívida.`,
+        b:"Redistribuir", acao:"rebalancear"});
 
     const arr = p.ciclo[w] || [];
     if(arr.length){
@@ -1429,89 +1470,171 @@ function gerarAvisos(){
       const pend = arr.filter((b,i)=> !(p.feitos && p.feitos[chaveBloco(hj,i)])).length;
       if(pend > 0)
         out.push({n:"info", ico:"🎯", t:`Hoje: ${pend} de ${arr.length} blocos pendentes`,
-          d:arr.map(b=>`${b.materia} ${b.horas.toString().replace(".",",")} h`).join(" · ") + ` — total ${horas.toFixed(1).replace(".",",")} h`,
-          b:"Ver", f:()=>{ tab('plano'); subTab('hoje'); }});
+          d:arr.map(b=>`${b.materia} ${b.horas.toString().replace(".",",")} h`).join(" · ") +
+            ` — total ${horas.toFixed(1).replace(".",",")} h`,
+          b:"Ver", acao:"hoje"});
       else
         out.push({n:"ok", ico:"✅", t:"Objetivos de hoje cumpridos",
           d:`${horas.toFixed(1).replace(".",",")} h feitas. Pode parar tranquilo.`,
-          b:"Ver", f:()=>{ tab('plano'); subTab('hoje'); }});
+          b:"Ver", acao:"hoje"});
     } else if(w === 0){
       out.push({n:"ok", ico:"😴", t:"Domingo — dia de descanso",
         d:"Descansar faz parte do plano. Se quiser adiantar, veja as prioridades.",
-        b:"Prioridades", f:()=> tab('prio')});
+        b:"Prioridades", acao:"prioridade"});
     }
   }
 
-  const criticos = ranking().filter(s=> s.dif >= 0.6).slice(0,2);
-  criticos.forEach(s=> out.push({n:"warn", ico:"🎯", t:`Reforçar ${s.assunto}`,
-    d:`${Math.round(s.dif*100)}% de erro em ${s.acertos}/${s.total} questões.`,
-    b:"Ver", f:()=> tab('prio')}));
+  ranking().filter(s=> s.dif >= 0.6).slice(0,2).forEach(s=>{
+    out.push({n:"warn", ico:"🎯", t:`Reforçar ${s.assunto}`,
+      d:`${Math.round(s.dif*100)}% de erro em ${s.acertos}/${s.total} questões.`,
+      b:"Ver", acao:"prioridade"});
+  });
 
   if(db.ultimaExportacao){
     const dias = Math.round((new Date(hj) - new Date(db.ultimaExportacao))/86400000);
     if(dias >= 7)
       out.push({n:"warn", ico:"💾", t:`Backup há ${dias} dias`,
-        d:"Seus dados moram só neste celular. Exporte uma cópia.",
-        b:"Exportar", f:()=>{ tab('plano'); subTab('edital'); exportar(); }});
+        d:"Seus dados moram só neste celular. Exporte uma cópia.", b:"Exportar", acao:"exportar"});
   } else if(db.sessoes.length >= 5){
     out.push({n:"warn", ico:"💾", t:"Nunca exportou seus dados",
-      d:"Um backup leva 5 segundos e evita perder tudo.",
-      b:"Exportar", f:()=>{ tab('plano'); subTab('edital'); exportar(); }});
+      d:"Um backup leva 5 segundos e evita perder tudo.", b:"Exportar", acao:"exportar"});
   }
 
   return out;
 }
-function contarPendencias(){
-  return gerarAvisos().filter(a=> a.n === "erro" || a.n === "warn").length;
+
+/* --------- arquivo de avisos: cada um fica guardado com data e estado de leitura */
+function slugAviso(a){
+  return String(a.t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,44);
+}
+function sincronizarAvisos(){
+  db.avisos = db.avisos || [];
+  const hj = hoje();
+  const existentes = new Set(db.avisos.map(a=>a.id));
+  let novos = 0;
+  gerarAvisos().forEach(a=>{
+    const id = hj + "|" + slugAviso(a);
+    if(existentes.has(id)) return;
+    db.avisos.unshift({id, data:hj, n:a.n, ico:a.ico, t:a.t, d:a.d, b:a.b||"", acao:a.acao||"", lida:false});
+    novos++;
+  });
+  db.avisos.sort((x,y)=> y.data.localeCompare(x.data));
+  if(db.avisos.length > 500) db.avisos = db.avisos.slice(0,500);
+  if(novos) salvar();
+  return novos;
+}
+function naoLidos(){ return (db.avisos||[]).filter(a=>!a.lida).length; }
+
+/* avisos com mais de 14 dias saem aos poucos, para o app nao engordar */
+const RETENCAO_DIAS = 14;
+function limparAvisosAntigos(){
+  db.avisos = db.avisos || [];
+  const limite = maisDias(hoje(), -RETENCAO_DIAS);
+  const ordenados = [...db.avisos].sort((a,b)=> a.data.localeCompare(b.data));
+  const manter = [];
+  let removidos = 0;
+  ordenados.forEach(a=>{
+    if(a.data < limite && removidos < 12){ removidos++; return; }
+    manter.push(a);
+  });
+  if(removidos){ db.avisos = manter; salvar(); }
+  return removidos;
 }
 function atualizarSino(){
   const badge = document.getElementById("sinoBadge");
   if(!badge) return;
-  const n = contarPendencias();
+  const n = naoLidos();
   badge.style.display = n ? "grid" : "none";
-  badge.textContent = n;
+  badge.textContent = n > 9 ? "9+" : n;
+}
+
+/* --------- painel: mostra por semana, com botão para carregar as antigas */
+let semanasVisiveis = 1;
+function inicioSemana(isoData){
+  const d = new Date(isoData + "T12:00:00");
+  const w = d.getDay();
+  d.setDate(d.getDate() - w);
+  return iso(d);
+}
+function renderAvisos(){
+  const lista = document.getElementById("listaAvisos");
+  const rodape = document.getElementById("maisAvisos");
+  const todos = (db.avisos||[]);
+  if(!todos.length){
+    lista.innerHTML = `<div class="mini">Nenhum aviso ainda. Volte depois de estudar.</div>`;
+    if(rodape) rodape.style.display = "none";
+    return;
+  }
+  const limite = maisDias(hoje(), -7*semanasVisiveis + 1);
+  const visiveis = todos.filter(a=> a.data >= limite);
+  const grupos = {};
+  visiveis.forEach(a=>{
+    const k = inicioSemana(a.data);
+    (grupos[k] = grupos[k] || []).push(a);
+  });
+  const chaves = Object.keys(grupos).sort().reverse();
+
+  lista.innerHTML = chaves.map(k=>{
+    const rotulo = k === inicioSemana(hoje()) ? "Esta semana"
+      : (k === inicioSemana(maisDias(hoje(),-7)) ? "Semana passada"
+      : "Semana de " + formatarBR(k));
+    const itens = grupos[k].map(a=>`<div class="aviso-item ${a.n}">
+        <span class="ico">${a.ico}</span>
+        <div class="corpo"><b>${a.t}</b><span>${a.d}</span>
+          <span style="display:block;color:#9AA9BA;font-size:10px;margin-top:3px">${formatarBR(a.data)}</span></div>
+        ${a.b?`<button class="ir" onclick="executarAcao('${a.acao}')">${a.b}</button>`:""}
+      </div>`).join("");
+    return `<div class="grupo-semana">${rotulo}</div>${itens}`;
+  }).join("");
+
+  const ocultos = todos.filter(a=> a.data < limite).length;
+  if(rodape){
+    rodape.style.display = ocultos ? "block" : "none";
+    rodape.textContent = `Carregar avisos anteriores (${ocultos})`;
+  }
+}
+function carregarAntigas(){
+  semanasVisiveis += 4;
+  renderAvisos();
+  toast("Mostrando mais 4 semanas", "info");
 }
 function abrirAvisos(){
-  const lista = document.getElementById("listaAvisos");
-  const avisos = gerarAvisos();
-  lista.innerHTML = avisos.length
-    ? avisos.map((a,i)=>`<div class="aviso-item ${a.n}">
-        <span class="ico">${a.ico}</span>
-        <div class="corpo"><b>${a.t}</b><span>${a.d}</span></div>
-        ${a.b?`<button class="ir" onclick="acaoAviso(${i})">${a.b}</button>`:""}
-      </div>`).join("")
-    : `<div class="mini">Tudo em ordem. Nada pendente hoje.</div>`;
+  limparAvisosAntigos();
+  sincronizarAvisos();
+  renderAvisos();
   document.getElementById("painelAvisos").classList.remove("oculto");
+  // abriu e leu: marca como lido e zera o contador
+  let mudou = false;
+  (db.avisos||[]).forEach(a=>{ if(!a.lida){ a.lida = true; mudou = true; } });
+  if(mudou) salvar();
   atualizarSino();
-}
-function acaoAviso(i){
-  const avisos = gerarAvisos();
-  const a = avisos[i];
-  fecharAvisos();
-  if(a && a.f) setTimeout(a.f, 60);
 }
 function fecharAvisos(ev){
   const painel = document.getElementById("painelAvisos");
   if(ev && ev.target !== painel) return;
   painel.classList.add("oculto");
 }
-
-/* ============================================================ AVISOS */
-function toast(msg, tipo){
-  const box = document.getElementById("toasts");
-  if(!box) return;
-  const el = document.createElement("div");
-  el.className = "toast " + (tipo || "info");
-  el.textContent = msg;
-  box.appendChild(el);
-  requestAnimationFrame(()=> el.classList.add("mostra"));
-  setTimeout(()=>{
-    el.classList.remove("mostra");
-    setTimeout(()=> el.remove(), 260);
-  }, 2600);
+function executarAcao(cod){
+  fecharAvisos();
+  const mapa = {
+    rotina: ()=>{ tab("plano"); subTab("rotina"); },
+    gerar: ()=>{ tab("plano"); subTab("edital"); },
+    hoje: ()=>{ tab("plano"); subTab("hoje"); },
+    prioridade: ()=> tab("prio"),
+    exportar: ()=>{ tab("plano"); subTab("edital"); exportar(); },
+    rebalancear: ()=>{ tab("plano"); subTab("hoje"); rebalancear(); }
+  };
+  setTimeout(()=> (mapa[cod] || (()=>{}))(), 90);
 }
+document.addEventListener("keydown", (e)=>{
+  if(e.key === "Escape"){
+    const painel = document.getElementById("painelAvisos");
+    if(painel && !painel.classList.contains("oculto")) painel.classList.add("oculto");
+  }
+});
 
-/* ============================================================ SUBABAS */
+/* ============================================================ SUBABAS *//* ============================================================ SUBABAS */
 function subTab(nome){
   ["hoje","semana","rotina","edital"].forEach(x=>{
     const el = document.getElementById("sub-"+x);
@@ -1550,14 +1673,15 @@ function renderHoje(){
   const arr = p.ciclo[w] || [];
 
   // situação: planejado até hoje x cumprido
-  let planejado = 0, cumprido = 0;
-  for(let x = p.inicio; x <= d; x = maisDias(x,1)){
-    planejado += (p.ciclo[dow(x)] || []).reduce((a,b)=>a + b.horas, 0);
-    cumprido += minutosDoDia(x)/60;
-  }
-  const dif = cumprido - planejado;
+  const s = situacaoPlano();
+  const dif = s ? s.dif : 0;
+  const planejado = s ? s.planejado : 0;
   if(status){
-    if(planejado === 0) status.innerHTML = "";
+    const ini = planoAtivo() ? planoAtivo().inicio : null;
+    if(ini && ini > d) status.innerHTML =
+      `<div class="status info">Plano começa em ${formatarBR(ini)} — faltam ${Math.round((new Date(ini)-new Date(d))/86400000)} dia(s).</div>`;
+    else if(!s || s.dias === 0 || planejado === 0) status.innerHTML =
+      `<div class="status info">Primeiro dia do plano — nada em atraso ainda.</div>`;
     else if(dif < -1) status.innerHTML = `<div class="status err">${Math.abs(dif).toFixed(1).replace(".",",")} h atrás do plano — dá para recuperar redistribuindo.</div>`;
     else if(dif > 1) status.innerHTML = `<div class="status ok">${dif.toFixed(1).replace(".",",")} h adiantado. Bom ritmo.</div>`;
     else status.innerHTML = `<div class="status info">Em dia com o plano.</div>`;
@@ -1687,13 +1811,9 @@ document.getElementById("apiKey").value=db.apiKey||"";
 document.getElementById("apiModel").value=db.apiModel||"gemini-flash-lite-latest";
 carregarCronometro();
 setTimeout(()=>{
+  limparAvisosAntigos();
+  sincronizarAvisos();
   atualizarSino();
-  let visto = null;
-  try{ visto = localStorage.getItem("szm_aviso_dia"); }catch(e){}
-  if(visto !== hoje()){
-    try{ localStorage.setItem("szm_aviso_dia", hoje()); }catch(e){}
-    if(gerarAvisos().length) abrirAvisos();
-  }
 }, 400);
 renderRotinaForm(); popularSelects(); renderMaterias(); renderChips();
 renderListaPlanos(); renderPesos(); renderSemana(); renderHoje(); renderChips2(); renderSaldo();
