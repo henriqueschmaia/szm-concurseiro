@@ -1616,10 +1616,22 @@ function marcarSecao(sec, re){
   const m = sec.search(re);
   return m < 0 ? null : m;
 }
+const CABECAS_CARGO = /(ANALISTA|T[ÉE]CNICO|OFICIAL|M[ÉE]DICO|PSIC[ÓO]LOGO|ARQUITETO|ASSISTENTE|ENFERMEIRO|ENGENHEIRO|CONTADOR|ADVOGADO|AUDITOR|DELEGADO|ESCRIV[ÃA]O|PROFESSOR|FISCAL|AGENTE|BIBLIOTEC[ÁA]RIO|NUTRICIONISTA|FARMAC[ÊE]UTICO|DENTISTA|VETERIN[ÁA]RIO|JORNALISTA|PROGRAMADOR|DESIGNER)/i;
 function limparNomeCargo(s){
-  let nome = String(s || "").split(/\s{2,}/).pop().trim();
-  nome = nome.replace(/^CR\s+/i, "").replace(/\s+/g, " ");
-  return nome;
+  const bruto = String(s || "");
+  const m = CABECAS_CARGO.exec(bruto);
+  let nome = m ? bruto.slice(m.index) : bruto;
+  nome = nome.replace(/[\-–:]\s*$/, "").replace(/\s+/g, " ").trim();
+  return limparTextoEdital(nome);
+}
+/* corrige o espacamento quebrado do PDF: "Ins ti tucional" -> "Institucional" */
+const PALAVRAS_COMUNS = /^(de|do|da|dos|das|com|para|por|sem|sob|sobre|entre|que|não|um|uma|os|as|e|a|o|em|ao|à|às|aos|se|no|na|nos|nas|ou|ao)$/i;
+function limparTextoEdital(s){
+  return String(s || "")
+    .replace(/(\S+)\s+(ti|fi|fl|ft|ss|rr)\s+(\S+)/gi, (todo, antes, frag, depois) =>
+      PALAVRAS_COMUNS.test(antes) ? antes + " " + frag + depois : antes + frag + depois)
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 function estruturaAnexo(texto){
   const m = texto.match(/conte[úu]do\s+program[áa]tico/i);
@@ -1733,7 +1745,8 @@ TEXTO:
 ${bloco}`;
     try{
       const r = await chamarGeminiBusca(prompt, 8192, false);
-      disc = (r.obj.disciplinas || []).filter(d=> d && d.nome && (d.topicos||[]).length);
+      disc = (r.obj.disciplinas || []).filter(d=> d && d.nome && (d.topicos||[]).length)
+        .map(d=>({ nome: limparTextoEdital(d.nome), topicos: (d.topicos||[]).map(limparTextoEdital) }));
       if(!disc.length) disc = null;
     }catch(e){ erroIA = e.message; }
   }
@@ -1772,8 +1785,8 @@ function usarCargo(i){
   const c = cargosEncontrados[i];
   if(!c){ toast("Cargo inválido", "err"); return; }
   const disc = c.disciplinas.filter(d=> d && d.nome).map(d=>({
-    nome:d.nome,
-    topicos:(d.topicos || []).filter(Boolean)
+    nome: limparTextoEdital(d.nome),
+    topicos: (d.topicos || []).filter(Boolean).map(limparTextoEdital)
   }));
   db.edital = {
     texto: disc.map(d=> `${d.nome}\n` + d.topicos.map(x=>"• "+x).join("\n")).join("\n\n"),
