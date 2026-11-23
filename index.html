@@ -333,7 +333,19 @@
       </div>
 
       <div class="card">
-        <h2>Edital</h2>
+        <h2>Buscar concursos</h2>
+        <div class="aviso">A IA pesquisa na web e monta uma lista. Ela <b>não lê o PDF oficial</b> diretamente —
+          resume o que os sites publicam, e pode errar datas. Confira as fontes em cada cartão.</div>
+        <div class="linha"><label>Palavra-chave</label>
+          <input type="text" id="busca-termo" placeholder="ex.: TJSC técnico, tribunal SC, analista judiciário" style="flex:1"></div>
+        <button class="btn principal" onclick="buscarConcursos()">Buscar concursos</button>
+        <div class="mini" id="busca-msg"></div>
+      </div>
+
+      <div id="busca-resultado"></div>
+
+      <div class="card">
+        <h2>Edital (manual)</h2>
         <textarea id="edital" placeholder="Cole aqui o Anexo I ou anexe o arquivo..."></textarea>
         <button class="btn sec" onclick="document.getElementById('arqEdital').click()">Anexar edital</button>
         <input type="file" id="arqEdital" accept=".txt,.md,.csv,.pdf" class="oculto"
@@ -1238,7 +1250,175 @@ function recalcularPlano(){
     "Plano recalculado e ativado. Progresso considerado: "+prog;
 }
 
-/* ============================================================ IA */
+/* ============================================================ BUSCA DE CONCURSOS */
+let listaConcursos = [];
+let concursoEscolhido = null;
+
+function cartaoConcurso(c, i){
+  const cores = {
+    aberto:   {cor:"#2E8B57", rotulo:"Inscrições abertas"},
+    previsto: {cor:"#C2A24E", rotulo:"Anunciado / previsto"},
+    encerrado:{cor:"#8A9AAF", rotulo:"Encerrado"}
+  };
+  const s = cores[c.situacao] || cores.previsto;
+  const edital = c.tem_edital ? "edital publicado" : "sem edital";
+  return `<div class="card" style="margin-bottom:9px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:800;color:#0A2240">${c.cargo || "Concurso"}</div>
+        <div style="font-size:11px;color:#5B6B80;margin-top:2px">${[c.orgao, c.ano, c.data_prova?("prova "+formatarBR(c.data_prova)):""].filter(Boolean).join(" · ")}</div>
+      </div>
+      <span style="font-size:10px;font-weight:800;color:${s.cor};background:${s.cor}18;padding:3px 8px;border-radius:99px;white-space:nowrap">${s.rotulo}</span>
+    </div>
+    <div style="font-size:11px;color:#7A8AA0;margin-top:6px">${edital}${c.observacao?(" · "+c.observacao):""}</div>
+    ${c.url_fonte?`<div class="mini" style="word-break:break-all">fonte: <a href="${c.url_fonte}" target="_blank" rel="noopener" style="color:#30A6B5">${c.url_fonte.replace(/^https?:\/\//,"").slice(0,52)}</a></div>`:""}
+    <button class="btn mini" style="margin-top:8px" onclick="escolherConcurso(${i})">Usar este</button>
+  </div>`;
+}
+
+async function chamarGeminiBusca(prompt, maxTokens){
+  const modelos = ["gemini-flash-latest", db.apiModel || "gemini-flash-lite-latest", "gemini-flash-lite-latest"]
+    .filter((m,i,a)=> m && a.indexOf(m) === i);
+  let erro = "";
+  for(const modelo of modelos){
+    for(let tent = 1; tent <= 2; tent++){
+      try{
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent?key=${encodeURIComponent(db.apiKey)}`;
+        const r = await fetch(url, {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({
+            contents:[{parts:[{text:prompt}]}],
+            tools:[{google_search:{}}],
+            generationConfig:{ temperature:0.2, maxOutputTokens:maxTokens || 8192 }
+          })
+        });
+        if(r.status === 503 || r.status === 429){
+          erro = "serviço ocupado (" + r.status + ")";
+          await new Promise(res=>setTimeout(res, 2500));
+          continue;
+        }
+        if(!r.ok){ erro = "HTTP " + r.status + " — " + (await r.text()).slice(0, 140); break; }
+        const j = await r.json();
+        const texto = (j.candidates?.[0]?.content?.parts || []).map(x=>x.text || "").join("");
+        const limpo = texto.replace(/```json/g,"").replace(/```/g,"").trim();
+        const ini = limpo.indexOf("{"), fim = limpo.lastIndexOf("}");
+        if(ini < 0 || fim < 0) throw new Error("a IA não devolveu JSON");
+        return JSON.parse(limpo.slice(ini, fim + 1));
+      }catch(e){ erro = e.message; break; }
+    }
+  }
+  throw new Error(erro || "sem resposta");
+}
+
+async function buscarConcursos(){
+  const msg = document.getElementById("busca-msg");
+  const box = document.getElementById("busca-resultado");
+  const termo = (document.getElementById("busca-termo").value || "").trim();
+  if(!db.apiKey){ toast("Cole sua chave de API primeiro", "err"); msg.textContent = "Falta a chave."; return; }
+  if(!termo){ toast("Digite uma palavra-chave", "err"); return; }
+
+  box.innerHTML = "";
+  let seg = 0;
+  msg.textContent = "Pesquisando na web...";
+  const cron = setInterval(()=>{ seg++; msg.textContent = "Pesquisando na web... " + seg + "s"; }, 1000);
+
+  const prompt = `Pesquise na web concursos públicos brasileiros relacionados a: "${termo}".
+Responda APENAS com JSON:
+{"concursos":[{"orgao":"","cargo":"","ano":"","situacao":"aberto|previsto|encerrado",
+"tem_edital":true,"data_prova":"AAAA-MM-DD ou vazio","observacao":"","url_fonte":""}]}
+Regras:
+- até 8 concursos, do mais recente para o mais antigo;
+- "aberto" = inscrições ou provas ainda por vir; "previsto" = anunciado mas sem edital;
+  "encerrado" = provas já realizadas;
+- "tem_edital" = existe edital publicado;
+- url_fonte = página de onde tirou a informação;
+- não invente: se não tiver certeza da data, deixe vazio.`;
+
+  try{
+    const obj = await chamarGeminiBusca(prompt, 4096);
+    listaConcursos = (obj.concursos || []).filter(c=> c && (c.cargo || c.orgao));
+    if(!listaConcursos.length){
+      box.innerHTML = `<div class="card"><div class="status err">Nenhum concurso encontrado para "${termo}".</div></div>`;
+      msg.textContent = "Sem resultado.";
+      return;
+    }
+    box.innerHTML = `<div class="mini" style="margin:2px 0 8px">${listaConcursos.length} concurso(s) — toque em "Usar este" para puxar as matérias.</div>` +
+      listaConcursos.map((c,i)=> cartaoConcurso(c,i)).join("");
+    msg.textContent = "Confira a situação e as fontes.";
+  }catch(e){
+    box.innerHTML = `<div class="card"><div class="status err">Falhou: ${e.message}</div></div>`;
+    msg.textContent = "Sem resultado.";
+  }finally{ clearInterval(cron); }
+}
+
+async function escolherConcurso(i){
+  const c = listaConcursos[i];
+  if(!c) return;
+  concursoEscolhido = c;
+  const box = document.getElementById("busca-resultado");
+  box.innerHTML = `<div class="card"><div class="mini">Lendo as matérias de <b>${c.cargo}</b>...</div>
+    <div class="mini" id="detalhe-msg">aguarde</div></div>`;
+  let seg = 0;
+  const alvo = document.getElementById("detalhe-msg");
+  const cron = setInterval(()=>{ seg++; if(alvo) alvo.textContent = "aguarde " + seg + "s"; }, 1000);
+
+  const base = c.tem_edital
+    ? `o edital publicado do concurso ${c.orgao} ${c.cargo} ${c.ano}`
+    : `o ÚLTIMO edital publicado e as últimas provas do concurso ${c.orgao} ${c.cargo} (não há edital novo ainda)`;
+
+  const prompt = `Pesquise na web ${base}.
+Responda APENAS com JSON:
+{"disciplinas":[{"nome":"","topicos":["",""]}],"data_prova":"","compilado":true,"fontes":["url"]}
+Regras:
+- nomes das disciplinas como no Anexo I;
+- tópicos e submatérias conforme o edital;
+- se não houver edital novo, monte com base no último edital e marque "compilado": true;
+- entre 5 e 15 disciplinas; não invente matérias.`;
+
+  try{
+    const obj = await chamarGeminiBusca(prompt, 8192);
+    const disc = (obj.disciplinas || []).filter(d=> d && d.nome);
+    if(!disc.length) throw new Error("não consegui extrair as matérias");
+    const total = disc.reduce((a,d)=>a + (d.topicos||[]).length, 0);
+    box.innerHTML = `<div class="card">
+      <div class="status ${obj.compilado ? "info" : "ok"}">
+        ${obj.compilado ? "Compilado do último edital/provas" : "Edital encontrado"} — ${disc.length} disciplinas, ${total} submatérias.</div>
+      <div style="font-size:12px;font-weight:800;color:#0A2240;margin-bottom:6px">${c.cargo} · ${c.orgao} ${c.ano||""}</div>
+      ${disc.map(d=>`<div style="margin-top:7px">
+        <b style="font-size:11.5px;color:#0A2240">${d.nome}</b>
+        <div style="font-size:11px;color:#5B6B80;line-height:1.45">${(d.topicos||[]).join(" · ")}</div></div>`).join("")}
+      ${(obj.fontes||[]).length?`<div class="mini" style="margin-top:9px">Fontes: ${obj.fontes.slice(0,5)
+        .map(u=>`<a href="${u}" target="_blank" rel="noopener" style="color:#30A6B5;word-break:break-all">${u.replace(/^https?:\/\//,"").slice(0,40)}</a>`).join(" · ")}</div>`:""}
+      <button class="btn principal" style="margin-top:10px;width:100%" onclick="usarConcurso()">Usar estas matérias</button>
+      <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="buscarConcursos()">Voltar à lista</button>
+    </div>`;
+    concursoEscolhido.detalhes = {disciplinas: disc, dataProva: obj.data_prova || "", fontes: obj.fontes||[]};
+  }catch(e){
+    box.innerHTML = `<div class="card"><div class="status err">Falhou: ${e.message}</div>
+      <button class="btn sec mini" onclick="buscarConcursos()">Voltar</button></div>`;
+  }finally{ clearInterval(cron); }
+}
+
+function usarConcurso(){
+  if(!concursoEscolhido || !concursoEscolhido.detalhes){ toast("Nada para aplicar", "err"); return; }
+  const det = concursoEscolhido.detalhes;
+  db.edital = {
+    texto: det.disciplinas.map(d=> `${d.nome}\n` + (d.topicos||[]).map(x=>"• "+x).join("\n")).join("\n\n"),
+    disciplinas: det.disciplinas.map(d=>({nome:d.nome, topicos:(d.topicos||[]).filter(Boolean)}))
+  };
+  if(det.dataProva && !db.rotina.prova){
+    db.rotina.prova = det.dataProva;
+    const el = document.getElementById("p-prova"); if(el) el.value = det.dataProva;
+  }
+  db.pesos = {};
+  db.edital.disciplinas.forEach(d=> db.pesos[d.nome] = Math.max(1, d.topicos.length));
+  salvar();
+  renderPesos(); renderMaterias(); popularSelects(); atualizarJanela();
+  const total = db.edital.disciplinas.reduce((a,d)=>a + d.topicos.length, 0);
+  toast(`Aplicado: ${db.edital.disciplinas.length} disciplinas, ${total} submatérias`, "ok");
+}
+
+/* ============================================================ IA *//* ============================================================ IA */
 function salvarChave(){
   db.apiKey=document.getElementById("apiKey").value.trim();
   db.apiModel=document.getElementById("apiModel").value.trim()||"gemini-flash-latest";
