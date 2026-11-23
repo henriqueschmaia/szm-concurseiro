@@ -371,6 +371,9 @@
 
       <div class="card">
         <h2>Gerar plano</h2>
+        <div class="linha"><label>Nome do plano</label>
+          <input type="text" id="p-nome" placeholder="ex.: TJSC Técnico — 6 meses" style="flex:1"></div>
+        <div class="mini" style="margin-top:-2px">Em branco, a IA nomeia pelo cargo.</div>
         <div class="linha"><label>Modelo</label><input type="text" id="apiModel" value="gemini-flash-lite-latest" style="flex:1"></div>
         <div class="linha"><label>Chave Gemini</label><input type="password" id="apiKey" placeholder="cole a chave" style="flex:1"></div>
         <button class="btn" onclick="salvarChave()">Salvar chave</button>
@@ -1004,6 +1007,26 @@ function extrairProva(){
 
 /* ============================================================ PLANOS */
 function uid(){ return "p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+function nomeEscolhido(){
+  const el = document.getElementById("p-nome");
+  return el ? (el.value || "").trim() : "";
+}
+function nomePadrao(){
+  if(db.edital && db.edital.nome) return db.edital.nome;
+  return "Plano " + (db.planos.length + 1);
+}
+function limparNome(){ const el=document.getElementById("p-nome"); if(el) el.value=""; }
+function renomearPlano(id){
+  const plano = db.planos.find(p=>p.id===id);
+  if(!plano) return;
+  const novo = prompt("Nome do plano:", plano.nome);
+  if(novo === null) return;
+  const limpo = novo.trim();
+  if(!limpo){ toast("O nome não pode ficar vazio", "err"); return; }
+  plano.nome = limpo.slice(0, 48);
+  salvar(); renderListaPlanos(); renderChips(); renderChips2();
+  toast("Plano renomeado", "ok");
+}
 function planoAtivo(){ return db.planos.find(p=>p.id===db.ativoId)||null; }
 /* atraso real: compara apenas dias anteriores a hoje — o dia corrente ainda esta em curso */
 function situacaoPlano(){
@@ -1035,6 +1058,7 @@ function renderListaPlanos(){
   box.innerHTML=db.planos.map(p=>`<div class="item"><span>${p.id===db.ativoId?"✅ ":""}<b>${p.nome}</b><br>
     <span style="color:#6B7280">${p.dias} dias · ${p.horasSemana.toString().replace(".",",")} h/sem · ${p.origem}</span></span>
     <span><button class="btn mini sec" onclick="ativarPlano('${p.id}')">usar</button>
+    <button class="btn mini sec" onclick="renomearPlano('${p.id}')">✎</button>
     <button onclick="apagarPlano('${p.id}')">✕</button></span></div>`).join("");
 }
 function apagarPlano(id){
@@ -1086,7 +1110,7 @@ function novoPlanoRegras(){
     return;
   }
   const ciclo=montarCiclo(j.inicio);
-  const plano={id:uid(),nome:"Plano "+(db.planos.length+1)+" (regras)",inicio:j.inicio,fim:j.fim,dias:j.dias,
+  const plano={id:uid(),nome:(nomeEscolhido() || nomePadrao())+" (regras)",inicio:j.inicio,fim:j.fim,dias:j.dias,
     horasSemana:horasSemana(j.inicio),ciclo,origem:"regras",criado:new Date().toISOString()};
   db.planos.push(plano); db.ativoId=plano.id; salvar();
   renderListaPlanos(); renderChips(); renderSemana(); renderHoje(); desenharTudo();
@@ -1436,9 +1460,12 @@ Regras:
 function usarConcurso(){
   if(!concursoEscolhido || !concursoEscolhido.detalhes){ toast("Nada para aplicar", "err"); return; }
   const det = concursoEscolhido.detalhes;
+  const rotulo = [concursoEscolhido.cargo, concursoEscolhido.orgao, concursoEscolhido.ano]
+    .filter(Boolean).join(" · ").slice(0, 44);
   db.edital = {
     texto: det.disciplinas.map(d=> `${d.nome}\n` + (d.topicos||[]).map(x=>"• "+x).join("\n")).join("\n\n"),
-    disciplinas: det.disciplinas.map(d=>({nome:d.nome, topicos:(d.topicos||[]).filter(Boolean)}))
+    disciplinas: det.disciplinas.map(d=>({nome:d.nome, topicos:(d.topicos||[]).filter(Boolean)})),
+    nome: rotulo
   };
   if(det.dataProva && !db.rotina.prova){
     db.rotina.prova = det.dataProva;
@@ -1449,6 +1476,8 @@ function usarConcurso(){
   salvar();
   renderPesos(); renderMaterias(); popularSelects(); atualizarJanela();
   const total = db.edital.disciplinas.reduce((a,d)=>a + d.topicos.length, 0);
+  const campoNome = document.getElementById("p-nome");
+  if(campoNome && !campoNome.value) campoNome.value = rotulo;
   toast(`Aplicado: ${db.edital.disciplinas.length} disciplinas, ${total} submatérias`, "ok");
 }
 
@@ -1489,6 +1518,7 @@ Regras:
 - Blocos de 1 a 1,5 h.
 - Distribua as disciplinas proporcionalmente ao peso e à dificuldade medida (quem erra mais recebe mais tempo).
 - Use as submatérias fornecidas; não invente.
+- Nomeie o plano com o cargo e o prazo, em até 40 caracteres${nomeEscolhido()?`. Use EXATAMENTE este nome: "${nomeEscolhido()}"`:""}.
 - Formato exato:
 {"nome":"Plano IA 1","inicio":"${j.inicio}","fim":"${j.fim}","dias":${j.dias},
  "ciclo":{"1":[{"materia":"...","topico":"...","horas":1.5}],"2":[],"3":[],"4":[],"5":[],"6":[],"0":[]}}
@@ -1537,7 +1567,7 @@ Dificuldade medida (1 = erra tudo): ${JSON.stringify(statsPorAssunto().map(s=>({
     const alvo = horasSemana(j.inicio);
     const ciclo = normalizarCiclo(obj.ciclo, alvo);
     const totalFinal = Object.values(ciclo).flat().reduce((a,b)=>a+b.horas,0);
-    const plano={id:uid(),nome:obj.nome||("Plano IA "+(db.planos.length+1)),
+    const plano={id:uid(),nome:(nomeEscolhido() || obj.nome || nomePadrao()).slice(0,48),
       inicio:obj.inicio||j.inicio,fim:obj.fim||j.fim,dias:obj.dias||j.dias,
       horasSemana:+totalFinal.toFixed(1),ciclo,origem:"IA",criado:new Date().toISOString()};
     db.planos.push(plano); db.ativoId=plano.id; salvar();
@@ -1983,7 +2013,7 @@ function rebalancear(){
     alvo += (p.ciclo[dow(x)] || []).reduce((a,b)=>a + b.horas, 0);
   if(alvo <= 0){ toast("Não há horas restantes no plano", "err"); return; }
   const ciclo = montarCiclo(inicio, true);
-  const novo = {id:uid(), nome:"Plano rebalanceado "+(db.planos.length+1),
+  const novo = {id:uid(), nome:(nomeEscolhido() || (p.nome.replace(/ \(.*\)$/,"")+" · recálculo")),
     inicio, fim:p.fim, dias:Math.round((new Date(p.fim)-new Date(inicio))/86400000)+1,
     horasSemana:horasSemana(inicio), ciclo, origem:"rebalanceado", criado:new Date().toISOString()};
   db.planos.push(novo); db.ativoId = novo.id; salvar();
