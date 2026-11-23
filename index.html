@@ -1279,35 +1279,61 @@ function cartaoConcurso(c, i){
 async function chamarGeminiBusca(prompt, maxTokens){
   const modelos = ["gemini-flash-latest", db.apiModel || "gemini-flash-lite-latest", "gemini-flash-lite-latest"]
     .filter((m,i,a)=> m && a.indexOf(m) === i);
-  let erro = "";
+
+  async function tentar(modelo, comBusca){
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent?key=${encodeURIComponent(db.apiKey)}`;
+    const corpo = {
+      contents:[{parts:[{text:prompt}]}],
+      generationConfig:{ temperature:0.2, maxOutputTokens:maxTokens || 4096 }
+    };
+    if(comBusca) corpo.tools = [{google_search:{}}];
+    const r = await fetch(url, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(corpo) });
+    const texto = await r.text();
+    if(!r.ok){
+      let detalhe = "";
+      try{ detalhe = JSON.parse(texto).error?.message || ""; }catch(e){ detalhe = texto.slice(0,160); }
+      const espera = parseInt(r.headers.get("retry-after") || "0", 10);
+      const err = new Error(detalhe || ("HTTP " + r.status));
+      err.status = r.status; err.espera = espera;
+      throw err;
+    }
+    const j = JSON.parse(texto);
+    const saida = (j.candidates?.[0]?.content?.parts || []).map(x=>x.text || "").join("");
+    const limpo = saida.replace(/```json/g,"").replace(/```/g,"").trim();
+    const a = limpo.indexOf("{"), b = limpo.lastIndexOf("}");
+    if(a < 0 || b < 0) throw new Error("a IA não devolveu JSON");
+    return JSON.parse(limpo.slice(a, b + 1));
+  }
+
+  let ultimoErro = null;
+  const pausas = [2500, 6000, 12000];
+
   for(const modelo of modelos){
-    for(let tent = 1; tent <= 2; tent++){
+    for(let tentativa = 0; tentativa < 3; tentativa++){
       try{
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent?key=${encodeURIComponent(db.apiKey)}`;
-        const r = await fetch(url, {
-          method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({
-            contents:[{parts:[{text:prompt}]}],
-            tools:[{google_search:{}}],
-            generationConfig:{ temperature:0.2, maxOutputTokens:maxTokens || 8192 }
-          })
-        });
-        if(r.status === 503 || r.status === 429){
-          erro = "serviço ocupado (" + r.status + ")";
-          await new Promise(res=>setTimeout(res, 2500));
-          continue;
-        }
-        if(!r.ok){ erro = "HTTP " + r.status + " — " + (await r.text()).slice(0, 140); break; }
-        const j = await r.json();
-        const texto = (j.candidates?.[0]?.content?.parts || []).map(x=>x.text || "").join("");
-        const limpo = texto.replace(/```json/g,"").replace(/```/g,"").trim();
-        const ini = limpo.indexOf("{"), fim = limpo.lastIndexOf("}");
-        if(ini < 0 || fim < 0) throw new Error("a IA não devolveu JSON");
-        return JSON.parse(limpo.slice(ini, fim + 1));
-      }catch(e){ erro = e.message; break; }
+        return {obj: await tentar(modelo, true), semBusca:false, modelo};
+      }catch(e){
+        ultimoErro = e;
+        const limite = (e.status === 429 || e.status === 503);
+        if(!limite) break;                                  // erro de outro tipo: não insiste
+        const espera = e.espera ? Math.min(e.espera*1000, 20000) : pausas[tentativa];
+        await new Promise(res=>setTimeout(res, espera));
+      }
     }
   }
-  throw new Error(erro || "sem resposta");
+
+  // limite atingido: tenta responder sem busca, avisando que pode estar desatualizado
+  try{
+    return {obj: await tentar(modelos[modelos.length-1], false), semBusca:true, modelo:modelos[modelos.length-1]};
+  }catch(e){ ultimoErro = e; }
+
+  const msg = String(ultimoErro && ultimoErro.message || "");
+  if(/quota|exceeded|limit/i.test(msg)){
+    const err = new Error("limite de uso da chave atingido — espere 1 a 2 minutos e tente de novo");
+    err.limite = true;
+    throw err;
+  }
+  throw new Error(msg || "sem resposta");
 }
 
 async function buscarConcursos(){
@@ -1335,18 +1361,25 @@ Regras:
 - não invente: se não tiver certeza da data, deixe vazio.`;
 
   try{
-    const obj = await chamarGeminiBusca(prompt, 4096);
+    const resposta = await chamarGeminiBusca(prompt, 4096);
+    const obj = resposta.obj;
     listaConcursos = (obj.concursos || []).filter(c=> c && (c.cargo || c.orgao));
     if(!listaConcursos.length){
       box.innerHTML = `<div class="card"><div class="status err">Nenhum concurso encontrado para "${termo}".</div></div>`;
       msg.textContent = "Sem resultado.";
       return;
     }
-    box.innerHTML = `<div class="mini" style="margin:2px 0 8px">${listaConcursos.length} concurso(s) — toque em "Usar este" para puxar as matérias.</div>` +
+    box.innerHTML = (resposta.semBusca
+        ? `<div class="status err">Limite de busca atingido — esta lista veio da memória da IA, sem consultar a web. Confira as datas antes de usar.</div>`
+        : "") +
+      `<div class="mini" style="margin:2px 0 8px">${listaConcursos.length} concurso(s) — toque em "Usar este" para puxar as matérias.</div>` +
       listaConcursos.map((c,i)=> cartaoConcurso(c,i)).join("");
     msg.textContent = "Confira a situação e as fontes.";
   }catch(e){
-    box.innerHTML = `<div class="card"><div class="status err">Falhou: ${e.message}</div></div>`;
+    box.innerHTML = `<div class="card"><div class="status err">${e.message}</div>
+      <button class="btn sec mini" onclick="buscarConcursos()">Tentar de novo</button>
+      <div class="mini">Se persistir, é a cota gratuita da chave. Ela renova a cada minuto
+        (limite por minuto) e por dia. Aguarde e repita.</div></div>`;
     msg.textContent = "Sem resultado.";
   }finally{ clearInterval(cron); }
 }
@@ -1376,7 +1409,8 @@ Regras:
 - entre 5 e 15 disciplinas; não invente matérias.`;
 
   try{
-    const obj = await chamarGeminiBusca(prompt, 8192);
+    const resposta = await chamarGeminiBusca(prompt, 6144);
+    const obj = resposta.obj;
     const disc = (obj.disciplinas || []).filter(d=> d && d.nome);
     if(!disc.length) throw new Error("não consegui extrair as matérias");
     const total = disc.reduce((a,d)=>a + (d.topicos||[]).length, 0);
