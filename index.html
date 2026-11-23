@@ -80,7 +80,8 @@
   .dia div{font-size:11.5px;margin-top:2px;color:#333}
   canvas{width:100%;display:block}
   .subnav{display:flex;gap:5px;background:#fff;border:1px solid var(--borda);border-radius:99px;
-          padding:4px;margin-bottom:10px;box-shadow:var(--sombra);position:sticky;top:76px;z-index:15}
+          padding:4px;margin-bottom:10px;box-shadow:0 3px 10px rgba(10,34,64,.10);
+          position:sticky;top:calc(var(--h-header, 72px) + 6px);z-index:15}
   .subnav button{flex:1;border:0;background:none;padding:8px 4px;border-radius:99px;
                  font-size:11px;font-weight:700;color:#7A8AA0}
   .subnav button.on{background:linear-gradient(135deg,#0A2240,#14325C);color:#fff;
@@ -1301,7 +1302,7 @@ function cartaoConcurso(c, i){
 }
 
 async function chamarGeminiBusca(prompt, maxTokens){
-  const modelos = ["gemini-flash-latest", db.apiModel || "gemini-flash-lite-latest", "gemini-flash-lite-latest"]
+  const modelos = [db.apiModel || "gemini-flash-lite-latest", "gemini-flash-latest"]
     .filter((m,i,a)=> m && a.indexOf(m) === i);
 
   async function tentar(modelo, comBusca){
@@ -1352,12 +1353,13 @@ async function chamarGeminiBusca(prompt, maxTokens){
   }catch(e){ ultimoErro = e; }
 
   const msg = String(ultimoErro && ultimoErro.message || "");
-  if(/quota|exceeded|limit/i.test(msg)){
-    const err = new Error("limite de uso da chave atingido — espere 1 a 2 minutos e tente de novo");
-    err.limite = true;
-    throw err;
-  }
-  throw new Error(msg || "sem resposta");
+  if(/high demand|overload|unavailable|503/i.test(msg) || (ultimoErro && ultimoErro.status === 503))
+    throw new Error("O serviço do Google está sobrecarregado agora. Espere 1 minuto e tente de novo — não é a sua chave.");
+  if(/quota|exceeded|limit|429/i.test(msg) || (ultimoErro && ultimoErro.status === 429))
+    throw new Error("Limite de uso da chave atingido. Espere 1 a 2 minutos (limite por minuto) ou até amanhã (cota diária).");
+  if(/tool|not supported|400/i.test(msg) || (ultimoErro && ultimoErro.status === 400))
+    throw new Error("Este modelo não aceita busca na web. Troque o modelo para gemini-flash-latest em Gerar plano.");
+  throw new Error(msg || "Sem resposta da IA.");
 }
 
 async function buscarConcursos(){
@@ -1452,8 +1454,9 @@ Regras:
     </div>`;
     concursoEscolhido.detalhes = {disciplinas: disc, dataProva: obj.data_prova || "", fontes: obj.fontes||[]};
   }catch(e){
-    box.innerHTML = `<div class="card"><div class="status err">Falhou: ${e.message}</div>
-      <button class="btn sec mini" onclick="buscarConcursos()">Voltar</button></div>`;
+    box.innerHTML = `<div class="card"><div class="status err">${e.message}</div>
+      <button class="btn principal mini" onclick="escolherConcurso(${i})">Tentar de novo</button>
+      <button class="btn sec mini" onclick="buscarConcursos()">Voltar à lista</button></div>`;
   }finally{ clearInterval(cron); }
 }
 
@@ -1878,7 +1881,13 @@ document.addEventListener("keydown", (e)=>{
   }
 });
 
-/* ============================================================ SUBABAS *//* ============================================================ SUBABAS */
+/* ============================================================ SUBABAS */
+function ajustarAlturaHeader(){
+  const h = document.querySelector("header");
+  if(h) document.documentElement.style.setProperty("--h-header", h.offsetHeight + "px");
+}
+window.addEventListener("resize", ajustarAlturaHeader);
+window.addEventListener("orientationchange", ()=> setTimeout(ajustarAlturaHeader, 250));/* ============================================================ SUBABAS */
 function subTab(nome){
   ["hoje","semana","rotina","edital"].forEach(x=>{
     const el = document.getElementById("sub-"+x);
@@ -2054,6 +2063,7 @@ document.getElementById("data").value=hoje();
 document.getElementById("apiKey").value=db.apiKey||"";
 document.getElementById("apiModel").value=db.apiModel||"gemini-flash-lite-latest";
 carregarCronometro();
+ajustarAlturaHeader();
 setTimeout(()=>{
   limparAvisosAntigos();
   sincronizarAvisos();
