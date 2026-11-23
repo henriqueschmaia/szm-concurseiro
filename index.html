@@ -453,7 +453,7 @@ const ROTINA_PADRAO = {
 
 let db = { sessoes:[], questoes:[], edital:{texto:"",disciplinas:[]},
            pesos:{}, planos:[], ativoId:null, apiKey:"", apiModel:"gemini-flash-lite-latest",
-           avisos:[], planoInicio:null, cacheBuscas:{},
+           avisos:[], planoInicio:null, cacheBuscas:{}, webStatus:"desconhecido",
            rotina: Object.assign({},ROTINA_PADRAO) };
 
 function carregar(){
@@ -463,6 +463,7 @@ function carregar(){
   db.rotina=Object.assign({},ROTINA_PADRAO,db.rotina||{});
   db.avisos = db.avisos || [];
   db.cacheBuscas = db.cacheBuscas || {};
+  db.webStatus = db.webStatus || "desconhecido";
   if(!db.pesos||!Object.keys(db.pesos).length) resetarPesos();
   if(db.planos.length && !db.ativoId) db.ativoId=db.planos[0].id;
 }
@@ -1303,84 +1304,138 @@ function cartaoConcurso(c, i){
     </div>
     <div style="font-size:11px;color:#7A8AA0;margin-top:6px">${edital}${c.observacao?(" · "+c.observacao):""}</div>
     ${c.url_fonte?`<div class="mini" style="word-break:break-all">fonte: <a href="${c.url_fonte}" target="_blank" rel="noopener" style="color:#30A6B5">${c.url_fonte.replace(/^https?:\/\//,"").slice(0,52)}</a></div>`:""}
-    <button class="btn mini" style="margin-top:8px" onclick="escolherConcurso(${i})">Usar este (rápido)</button>
-    <button class="btn mini sec" onclick="escolherConcurso(${i}, true)">Conferir na web</button>
+    <button class="btn mini" style="margin-top:8px" onclick="escolherConcurso(${i})">Usar este</button>
+    ${db.webStatus === "sem_cota" ? "" :
+      `<button class="btn mini sec" onclick="escolherConcurso(${i}, true)">Conferir na web</button>`}
   </div>`;
+}
+
+/* interpreta JSON mesmo truncado, fechando colchetes pendentes */
+function fecharPendentes(s){
+  const pilha = [];
+  let emString = false, esc = false;
+  for(const ch of s){
+    if(emString){
+      if(esc) esc = false;
+      else if(ch === "\\") esc = true;
+      else if(ch === '"') emString = false;
+      continue;
+    }
+    if(ch === '"'){ emString = true; continue; }
+    if(ch === "{") pilha.push("}");
+    else if(ch === "[") pilha.push("]");
+    else if(ch === "}" || ch === "]") pilha.pop();
+  }
+  return pilha.reverse().join("");
+}
+function tentarParsearJSON(texto){
+  const a = texto.indexOf("{");
+  if(a < 0) return null;
+  const base = texto.slice(a);
+  try{ return JSON.parse(base); }catch(e){}
+  for(let corte = base.length; corte > base.length * 0.4; corte--){
+    if(base[corte-1] !== "}") continue;
+    try{ return JSON.parse(base.slice(0, corte) + fecharPendentes(base.slice(0, corte))); }catch(e){}
+  }
+  return null;
+}
+
+/* chamada com limite de tempo — evita travar esperando servidor */
+function fetchComPrazo(url, opcoes, ms){
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=> ctrl.abort(), ms);
+  return fetch(url, Object.assign({}, opcoes, {signal: ctrl.signal}))
+    .finally(()=> clearTimeout(timer));
 }
 
 async function chamarGeminiBusca(prompt, maxTokens, usarBusca, aoTentar){
   if(usarBusca === undefined) usarBusca = true;
-  const modelos = [db.apiModel || "gemini-flash-lite-latest", "gemini-flash-latest"]
-    .filter((m,i,a)=> m && a.indexOf(m) === i);
+  // se esta chave já se mostrou sem cota para busca, nem tenta
+  if(usarBusca && db.webStatus === "sem_cota") usarBusca = false;
+  const inicio = Date.now();
+  const ORCAMENTO = usarBusca ? 20000 : 25000;   // busca: no máximo 20s
+
+  const modelos = usarBusca
+    ? ["gemini-flash-lite-latest", "gemini-flash-latest"]
+    : ["gemini-flash-lite-latest", "gemini-flash-latest"];
 
   async function tentar(modelo, comBusca){
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent?key=${encodeURIComponent(db.apiKey)}`;
     const corpo = {
       contents:[{parts:[{text:prompt}]}],
-      generationConfig:{ temperature:0.2, maxOutputTokens:maxTokens || 4096 }
+      generationConfig:{ temperature:0.2, maxOutputTokens:maxTokens || 3072 }
     };
     if(comBusca) corpo.tools = [{google_search:{}}];
-    const r = await fetch(url, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(corpo) });
+
+    const r = await fetchComPrazo(url, {
+      method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(corpo)
+    }, usarBusca ? 18000 : 20000);
+
     const texto = await r.text();
     if(!r.ok){
       let detalhe = "";
       try{ detalhe = JSON.parse(texto).error?.message || ""; }catch(e){ detalhe = texto.slice(0,160); }
-      const espera = parseInt(r.headers.get("retry-after") || "0", 10);
       const err = new Error(detalhe || ("HTTP " + r.status));
-      err.status = r.status; err.espera = espera;
+      err.status = r.status;
       throw err;
     }
     const j = JSON.parse(texto);
     const saida = (j.candidates?.[0]?.content?.parts || []).map(x=>x.text || "").join("");
     const limpo = saida.replace(/```json/g,"").replace(/```/g,"").trim();
-    const a = limpo.indexOf("{"), b = limpo.lastIndexOf("}");
-    if(a < 0 || b < 0) throw new Error("a IA não devolveu JSON");
-    return JSON.parse(limpo.slice(a, b + 1));
+    const obj = tentarParsearJSON(limpo);
+    if(!obj) throw new Error("a IA não devolveu JSON válido");
+    return obj;
   }
 
   let ultimoErro = null;
-  const pausas = usarBusca ? [5000, 15000, 30000] : [3000, 8000];
+  let semCotaWeb = false;
 
   for(const modelo of modelos){
-    for(let tentativa = 0; tentativa < (usarBusca ? 3 : 2); tentativa++){
+    if(Date.now() - inicio > ORCAMENTO) break;
+    for(let tentativa = 0; tentativa < 2; tentativa++){
+      if(Date.now() - inicio > ORCAMENTO) break;
       try{
-        return {obj: await tentar(modelo, usarBusca), semBusca: !usarBusca, modelo};
+        const obj = await tentar(modelo, usarBusca);
+        if(usarBusca){ db.webStatus = "ok"; salvar(); }
+        return {obj, semBusca: !usarBusca, modelo};
       }catch(e){
         ultimoErro = e;
-        const limite = (e.status === 429 || e.status === 503);
-        if(!limite) break;                                  // erro de outro tipo: não insiste
-        const espera = e.espera ? Math.min(e.espera*1000, 30000) : (pausas[tentativa] || 10000);
-        if(aoTentar) aoTentar(tentativa + 1, 3, Math.round(espera/1000), modelo);
-        await new Promise(res=>setTimeout(res, espera));
+        if(e.name === "AbortError"){ ultimoErro = new Error("tempo esgotado"); break; }
+
+        if(e.status === 429){
+          // cota: não adianta insistir em segundos — e desativa a busca nesta instalação
+          if(usarBusca){ semCotaWeb = true; db.webStatus = "sem_cota"; salvar(); }
+          break;
+        }
+        if(e.status === 503){
+          if(aoTentar) aoTentar(tentativa + 1, 2, 4, modelo);
+          await new Promise(r=>setTimeout(r, 4000));
+          continue;
+        }
+        break;   // 400/404 e afins: próximo modelo
       }
     }
+    if(semCotaWeb) break;
   }
 
-  // limite atingido: tenta responder sem busca, avisando que pode estar desatualizado
-  if(usarBusca){
+  // busca na web sem cota: tenta a versão rápida (memória do modelo)
+  if(semCotaWeb){
     try{
-      return {obj: await tentar(modelos[modelos.length-1], false), semBusca:true, modelo:modelos[modelos.length-1]};
+      const obj = await tentar("gemini-flash-lite-latest", false);
+      return {obj, semBusca:true, semCotaWeb:true, modelo:"gemini-flash-lite-latest"};
     }catch(e){ ultimoErro = e; }
   }
 
   const msg = String(ultimoErro && ultimoErro.message || "");
   if(/high demand|overload|unavailable|503/i.test(msg) || (ultimoErro && ultimoErro.status === 503))
-    throw new Error("O Google recusou as 3 tentativas (servidor lotado, cerca de 50s). " +
-      "Não é a sua chave nem o app. Espere alguns minutos — ou use o edital local: " +
-      "Anexar edital → Separar por cargo, que não passa pela busca.");
+    throw new Error("O Google está sobrecarregado agora. Tente em 1 minuto — não é a sua chave.");
   if(/quota|exceeded|limit|429/i.test(msg) || (ultimoErro && ultimoErro.status === 429))
-    throw new Error("Limite de uso da chave atingido. Espere 1 a 2 minutos (limite por minuto) ou até amanhã (cota diária).");
+    throw new Error("Cota da chave atingida. Espere 1 a 2 minutos e tente de novo.");
   if(/tool|not supported|400/i.test(msg) || (ultimoErro && ultimoErro.status === 400))
-    throw new Error("Este modelo não aceita busca na web. Troque o modelo para gemini-flash-latest em Gerar plano.");
+    throw new Error("Este modelo não aceita busca na web. Troque o modelo em Gerar plano.");
   throw new Error(msg || "Sem resposta da IA.");
 }
 
-function renderListaConcursos(){
-  const box = document.getElementById("busca-resultado");
-  if(!listaConcursos.length){ box.innerHTML = ""; return; }
-  box.innerHTML = `<div class="mini" style="margin:2px 0 8px">${listaConcursos.length} concurso(s) encontrados — toque em "Usar este".</div>` +
-    listaConcursos.map((c,i)=> cartaoConcurso(c,i)).join("");
-}
 function lerCache(termo){
   const c = (db.cacheBuscas||{})[termo.toLowerCase()];
   if(!c) return null;
@@ -1442,10 +1497,16 @@ Regras:
     }
     renderListaConcursos();
     if(!verificar){
+      const aviso = db.webStatus === "sem_cota"
+        ? `Resposta da memória da IA — sua chave gratuita não tem cota para busca na web.
+           Datas e situação podem estar desatualizadas; confirme no site oficial.`
+        : `Resposta rápida, sem consultar a web — pode estar desatualizada.`;
       box.insertAdjacentHTML("afterbegin",
-        `<div class="status info">Resposta rápida, sem consultar a web — pode estar desatualizada.
-           <button class="btn mini sec" style="margin-top:6px" onclick="buscarConcursos(true)">Conferir na web</button></div>`);
-      msg.textContent = "Rápido. Confira na web se quiser.";
+        `<div class="status info">${aviso}` +
+        (db.webStatus === "sem_cota" ? "" :
+          `<button class="btn mini sec" style="margin-top:6px" onclick="buscarConcursos(true)">Conferir na web</button>`) +
+        `</div>`);
+      msg.textContent = "Pronto.";
     } else {
       gravarCache(termo, listaConcursos);
       box.insertAdjacentHTML("afterbegin", `<div class="status ok">Conferido na web agora.</div>`);
@@ -1485,7 +1546,8 @@ Regras:
 - entre 5 e 15 disciplinas; não invente matérias.`;
 
   try{
-    const resposta = await chamarGeminiBusca(prompt, 6144, !!verificar, (tent, total, espera, modelo)=>{
+    const querWeb = !!verificar && db.webStatus !== "sem_cota";
+    const resposta = await chamarGeminiBusca(prompt, 6144, querWeb, (tent, total, espera, modelo)=>{
       const el = document.getElementById("detalhe-msg");
       if(el) el.textContent = `tentativa ${tent} de ${total} — Google ocupado, aguardando ${espera}s`;
     });
@@ -1506,10 +1568,13 @@ Regras:
       <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="buscarConcursos()">Voltar à lista</button>
     </div>`;
     concursoEscolhido.detalhes = {disciplinas: disc, dataProva: obj.data_prova || "", fontes: obj.fontes||[]};
-    if(!verificar){
+    if(!querWeb){
       box.insertAdjacentHTML("afterbegin",
-        `<div class="status info">Lista rápida, sem consultar a web.
-           <button class="btn mini sec" style="margin-top:6px" onclick="escolherConcurso(${i}, true)">Conferir na web</button></div>`);
+        `<div class="status info">Lista rápida, sem consultar a web.` +
+        (db.webStatus === "sem_cota"
+          ? ` Sua chave gratuita não tem cota para busca.`
+          : ` <button class="btn mini sec" style="margin-top:6px" onclick="escolherConcurso(${i}, true)">Conferir na web</button>`) +
+        `</div>`);
     }
   }catch(e){
     box.innerHTML = `<div class="card"><div class="status err">${e.message}</div>
@@ -1546,68 +1611,161 @@ function usarConcurso(){
 /* ============================================================ SEPARAR POR CARGO */
 let cargosEncontrados = [];
 
-async function separarPorCargo(){
+/* ---------- localiza a estrutura do Anexo I (sem IA) ---------- */
+function marcarSecao(sec, re){
+  const m = sec.search(re);
+  return m < 0 ? null : m;
+}
+function limparNomeCargo(s){
+  let nome = String(s || "").split(/\s{2,}/).pop().trim();
+  nome = nome.replace(/^CR\s+/i, "").replace(/\s+/g, " ");
+  return nome;
+}
+function estruturaAnexo(texto){
+  const m = texto.match(/conte[úu]do\s+program[áa]tico/i);
+  const sec = m ? texto.slice(m.index) : texto;
+  return {
+    sec,
+    geraisSup: marcarSecao(sec, /conhecimentos\s+gerais\s*\([^)]*superior/i),
+    espSup:    marcarSecao(sec, /conhecimentos\s+espec[íi]ficos\s*\([^)]*superior/i),
+    geraisMed: marcarSecao(sec, /conhecimentos\s+gerais\s*\([^)]*n[íi]vel\s+m[ée]dio/i),
+    espMed:    marcarSecao(sec, /conhecimentos\s+espec[íi]ficos\s*\([^)]*n[íi]vel\s+m[ée]dio/i),
+    anexo2:    marcarSecao(sec, /anexo\s+ii\s*[–-]/i)
+  };
+}
+function detectarCargosEdital(texto){
+  const e = estruturaAnexo(texto);
+  const nomes = [];
+  const re = /([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s\-]{4,45}):\s*REGI[ÃA]O/g;
+  let m;
+  while((m = re.exec(texto)) !== null){
+    const nome = limparNomeCargo(m[1]);
+    if(nome.length > 4 && !nomes.some(n=> n.toLowerCase() === nome.toLowerCase())) nomes.push(nome);
+  }
+  return nomes.map(nome=>({
+    nome,
+    nivel: /T[ÉE]CNICO/i.test(nome) ? "médio" : "superior"
+  }));
+}
+function blocoDoCargo(texto, nomeCargo){
+  const e = estruturaAnexo(texto);
+  const tecnico = /T[ÉE]CNICO/i.test(nomeCargo);
+  if(tecnico && e.geraisMed !== null){
+    const fim = e.anexo2 !== null ? e.anexo2 : Math.min(e.sec.length, e.geraisMed + 20000);
+    return e.sec.slice(e.geraisMed, fim);
+  }
+  const iniEsp = e.espSup !== null ? e.espSup : 0;
+  const fimEsp = e.geraisMed !== null ? e.geraisMed : e.sec.length;
+  const especificos = e.sec.slice(iniEsp, fimEsp);
+  const alvo = nomeCargo.toUpperCase().slice(0, 24);
+  let pos = especificos.toUpperCase().indexOf(alvo);
+  if(pos < 0){
+    const parcial = alvo.split(" ").slice(0,2).join(" ");
+    pos = especificos.toUpperCase().indexOf(parcial);
+  }
+  const comuns = (e.geraisSup !== null && e.espSup !== null)
+    ? e.sec.slice(e.geraisSup, e.espSup) : "";
+  if(pos < 0) return (comuns + "\n" + especificos).slice(0, 24000);
+  // fim: proximo cargo conhecido
+  const cargos = detectarCargosEdital(texto).map(c=> c.nome.toUpperCase().slice(0,24));
+  let fim = especificos.length;
+  cargos.forEach(c=>{
+    const p = especificos.toUpperCase().indexOf(c, pos + 30);
+    if(p > pos && p < fim) fim = p;
+  });
+  return (comuns + "\n" + especificos.slice(pos, fim)).slice(0, 24000);
+}
+
+/* ---------- lista de cargos instantânea (sem gastar cota) ---------- */
+function separarPorCargo(){
   const msg = document.getElementById("cargo-msg");
   const box = document.getElementById("listaCargos");
   const texto = (document.getElementById("edital").value || "").trim();
-  if(!db.apiKey){ toast("Cole sua chave de API primeiro", "err"); return; }
   if(texto.length < 200){ toast("Anexe ou cole o edital primeiro", "err"); msg.textContent = "Sem texto."; return; }
 
-  box.innerHTML = "";
+  cargosEncontrados = detectarCargosEdital(texto);
+  if(!cargosEncontrados.length){
+    box.innerHTML = `<div class="status err">Não identifiquei cargos no texto. Cole o Anexo I completo.</div>`;
+    msg.textContent = "Nenhum cargo encontrado.";
+    return;
+  }
+  box.innerHTML = cargosEncontrados.map((c,i)=>{
+    const tamanho = blocoDoCargo(texto, c.nome).length;
+    return `<div class="card" style="margin:8px 0 0;padding:11px">
+      <div style="font-size:12.5px;font-weight:800;color:#0A2240">${c.nome}</div>
+      <div style="font-size:11px;color:#5B6B80;margin-top:2px">nível ${c.nivel} · trecho de ${Math.round(tamanho/1000)} mil caracteres</div>
+      <button class="btn mini" style="margin-top:8px" onclick="processarCargo(${i})">Ler matérias</button>
+    </div>`;
+  }).join("");
+  msg.textContent = `${cargosEncontrados.length} cargos detectados direto do texto (sem IA). Escolha o seu.`;
+  toast(cargosEncontrados.length + " cargos detectados", "ok");
+}
+
+/* ---------- 1 chamada por cargo, só com o bloco dele ---------- */
+async function processarCargo(i){
+  const c = cargosEncontrados[i];
+  if(!c) return;
+  const texto = (document.getElementById("edital").value || "").trim();
+  const box = document.getElementById("listaCargos");
+  const msg = document.getElementById("cargo-msg");
+  const bloco = blocoDoCargo(texto, c.nome);
+
+  box.innerHTML = `<div class="card" style="padding:11px">
+    <div class="mini">Lendo ${c.nome} (${Math.round(bloco.length/1000)} mil caracteres)...</div>
+    <div class="mini" id="detalhe-cargo">aguarde</div></div>`;
+
   let seg = 0;
-  msg.textContent = "Lendo o Anexo I...";
-  const cron = setInterval(()=>{ seg++; msg.textContent = "Lendo o Anexo I... " + seg + "s"; }, 1000);
+  const cron = setInterval(()=>{
+    seg++;
+    const el = document.getElementById("detalhe-cargo");
+    if(el) el.textContent = "aguarde " + seg + "s";
+  }, 1000);
 
-  const corte = 180000;
-  const trecho = texto.length > corte ? texto.slice(0, corte) : texto;
-  const aviso = texto.length > corte ? " (texto truncado no início; se faltar cargo, use o .txt do trecho)" : "";
-
-  const prompt = `O texto abaixo é o Anexo I de um edital de concurso público brasileiro.
-Ele contém o conteúdo programático de VÁRIOS CARGOS.
-Identifique todos os cargos e, para cada cargo, as disciplinas e os tópicos que se aplicam a ele.
+  let disc = null, erroIA = null;
+  if(db.apiKey){
+    const prompt = `Abaixo está o conteúdo programático de UM cargo de um concurso público brasileiro.
+Liste todas as disciplinas e, para cada uma, os tópicos.
 Responda APENAS com JSON:
-{"cargos":[{"nome":"","disciplinas":[{"nome":"","topicos":["",""]}]}],"dataProva":"AAAA-MM-DD ou vazio"}
-Regras:
-- nome do cargo exatamente como no edital (ex.: "Técnico Judiciário Auxiliar");
-- cada cargo recebe apenas as disciplinas que o edital atribui a ele;
-- se o edital tiver bloco de "conhecimentos comuns" válido para todos, inclua em cada cargo;
-- tópicos literais do edital, sem inventar;
-- se não conseguir separar por cargo, devolva um único cargo "Geral" com todas as disciplinas.
+{"disciplinas":[{"nome":"","topicos":["",""]}]}
+Regras: use os nomes exatos das disciplinas; liste TODOS os tópicos numerados; não invente.
 
 TEXTO:
-${trecho}${aviso}`;
+${bloco}`;
+    try{
+      const r = await chamarGeminiBusca(prompt, 8192, false);
+      disc = (r.obj.disciplinas || []).filter(d=> d && d.nome && (d.topicos||[]).length);
+      if(!disc.length) disc = null;
+    }catch(e){ erroIA = e.message; }
+  }
 
-  try{
-    const resposta = await chamarGeminiBusca(prompt, 8192, false);
-    const obj = resposta.obj;
-    cargosEncontrados = (obj.cargos || []).filter(c=> c && c.nome && (c.disciplinas||[]).length);
+  // reserva: parser local do bloco
+  if(!disc){
+    const local = parseEdital(bloco.replace(/\s+([a-záéíóúç]{1,3})\s/g, " "));
+    disc = local.filter(d=> d.topicos.length);
+    if(disc.length && !erroIA) erroIA = "sem chave de IA — usei leitura direta do texto";
+  }
 
-    if(!cargosEncontrados.length) throw new Error("não consegui identificar cargos neste texto");
+  clearInterval(cron);
 
-    if(obj.dataProva && !db.rotina.prova){
-      db.rotina.prova = obj.dataProva;
-      const el = document.getElementById("p-prova"); if(el) el.value = obj.dataProva;
-      salvar(); atualizarJanela();
-    }
+  if(!disc || !disc.length){
+    box.innerHTML = `<div class="status err">${erroIA || "não consegui ler este cargo"}</div>
+      <button class="btn sec mini" onclick="processarCargo(${i})">Tentar de novo</button>
+      <button class="btn sec mini" onclick="separarPorCargo()">Voltar à lista</button>`;
+    return;
+  }
 
-    box.innerHTML = cargosEncontrados.map((c,i)=>{
-      const total = c.disciplinas.reduce((a,d)=>a + (d.topicos||[]).length, 0);
-      return `<div class="card" style="margin:8px 0 0;padding:11px">
-        <div style="font-size:12.5px;font-weight:800;color:#0A2240">${c.nome}</div>
-        <div style="font-size:11px;color:#5B6B80;margin-top:2px">
-          ${c.disciplinas.length} disciplinas · ${total} submatérias</div>
-        <div style="font-size:10.5px;color:#8A9AAF;margin-top:4px">
-          ${c.disciplinas.slice(0,6).map(d=>d.nome).join(" · ")}${c.disciplinas.length>6?" …":""}</div>
-        <button class="btn mini" style="margin-top:8px" onclick="usarCargo(${i})">Usar este cargo</button>
-      </div>`;
-    }).join("");
-    msg.textContent = `${cargosEncontrados.length} cargo(s) identificado(s). Escolha o seu.`;
-    toast(cargosEncontrados.length + " cargos encontrados", "ok");
-  }catch(e){
-    box.innerHTML = `<div class="status err">${e.message}</div>
-      <button class="btn sec mini" onclick="separarPorCargo()">Tentar de novo</button>`;
-    msg.textContent = "Falhou.";
-  }finally{ clearInterval(cron); }
+  cargosEncontrados[i].disciplinas = disc;
+  const total = disc.reduce((a,d)=>a+(d.topicos||[]).length,0);
+  box.innerHTML = `<div class="card" style="padding:11px">
+    <div class="status ${erroIA?"info":"ok"}">${disc.length} disciplinas, ${total} tópicos${erroIA?(" — "+erroIA):""}</div>
+    ${disc.map(d=>`<div style="margin-top:7px">
+      <b style="font-size:11.5px;color:#0A2240">${d.nome}</b>
+      <div style="font-size:11px;color:#5B6B80;line-height:1.45">${(d.topicos||[]).slice(0,12).join(" · ")}${(d.topicos||[]).length>12?" …":""}</div>
+    </div>`).join("")}
+    <button class="btn principal" style="width:100%;margin-top:10px" onclick="usarCargo(${i})">Usar estas matérias</button>
+    <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="processarCargo(${i})">Ler de novo</button>
+  </div>`;
+  toast(c.nome + ": " + disc.length + " disciplinas", "ok");
 }
 
 function usarCargo(i){
@@ -1638,7 +1796,8 @@ function usarCargo(i){
 /* ============================================================ IA *//* ============================================================ IA */
 function salvarChave(){
   db.apiKey=document.getElementById("apiKey").value.trim();
-  db.apiModel=document.getElementById("apiModel").value.trim()||"gemini-flash-latest";
+  db.apiModel=document.getElementById("apiModel").value.trim()||"gemini-flash-lite-latest";
+  db.webStatus="desconhecido";   // chave nova: tenta a busca na web outra vez
   salvar();
   document.getElementById("ia-msg").textContent=db.apiKey?"Chave salva neste aparelho.":"Chave vazia.";
 }
