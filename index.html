@@ -453,7 +453,7 @@ const ROTINA_PADRAO = {
 
 let db = { sessoes:[], questoes:[], edital:{texto:"",disciplinas:[]},
            pesos:{}, planos:[], ativoId:null, apiKey:"", apiModel:"gemini-flash-lite-latest",
-           avisos:[], planoInicio:null,
+           avisos:[], planoInicio:null, cacheBuscas:{},
            rotina: Object.assign({},ROTINA_PADRAO) };
 
 function carregar(){
@@ -462,6 +462,7 @@ function carregar(){
   db.edital=db.edital||{texto:"",disciplinas:[]};
   db.rotina=Object.assign({},ROTINA_PADRAO,db.rotina||{});
   db.avisos = db.avisos || [];
+  db.cacheBuscas = db.cacheBuscas || {};
   if(!db.pesos||!Object.keys(db.pesos).length) resetarPesos();
   if(db.planos.length && !db.ativoId) db.ativoId=db.planos[0].id;
 }
@@ -1302,7 +1303,8 @@ function cartaoConcurso(c, i){
     </div>
     <div style="font-size:11px;color:#7A8AA0;margin-top:6px">${edital}${c.observacao?(" · "+c.observacao):""}</div>
     ${c.url_fonte?`<div class="mini" style="word-break:break-all">fonte: <a href="${c.url_fonte}" target="_blank" rel="noopener" style="color:#30A6B5">${c.url_fonte.replace(/^https?:\/\//,"").slice(0,52)}</a></div>`:""}
-    <button class="btn mini" style="margin-top:8px" onclick="escolherConcurso(${i})">Usar este</button>
+    <button class="btn mini" style="margin-top:8px" onclick="escolherConcurso(${i})">Usar este (rápido)</button>
+    <button class="btn mini sec" onclick="escolherConcurso(${i}, true)">Conferir na web</button>
   </div>`;
 }
 
@@ -1379,19 +1381,44 @@ function renderListaConcursos(){
   box.innerHTML = `<div class="mini" style="margin:2px 0 8px">${listaConcursos.length} concurso(s) encontrados — toque em "Usar este".</div>` +
     listaConcursos.map((c,i)=> cartaoConcurso(c,i)).join("");
 }
-async function buscarConcursos(){
+function lerCache(termo){
+  const c = (db.cacheBuscas||{})[termo.toLowerCase()];
+  if(!c) return null;
+  if(Date.now() - c.ts > 12*3600*1000) return null;   // vale 12 horas
+  return c;
+}
+function gravarCache(termo, lista){
+  db.cacheBuscas = db.cacheBuscas || {};
+  db.cacheBuscas[termo.toLowerCase()] = {ts: Date.now(), lista};
+  salvar();
+}
+
+async function buscarConcursos(verificar){
   const msg = document.getElementById("busca-msg");
   const box = document.getElementById("busca-resultado");
   const termo = (document.getElementById("busca-termo").value || "").trim();
   if(!db.apiKey){ toast("Cole sua chave de API primeiro", "err"); msg.textContent = "Falta a chave."; return; }
   if(!termo){ toast("Digite uma palavra-chave", "err"); return; }
-
   box.innerHTML = "";
-  let seg = 0;
-  msg.textContent = "Pesquisando na web...";
-  const cron = setInterval(()=>{ seg++; msg.textContent = "Pesquisando na web... " + seg + "s"; }, 1000);
 
-  const prompt = `Pesquise na web concursos públicos brasileiros relacionados a: "${termo}".
+  if(!verificar){
+    const cache = lerCache(termo);
+    if(cache){
+      listaConcursos = cache.lista;
+      renderListaConcursos();
+      const quando = new Date(cache.ts).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+      box.insertAdjacentHTML("afterbegin",
+        `<div class="status ok">Resultado guardado de ${quando} — não gastou cota.</div>`);
+      msg.textContent = "Do cache.";
+      return;
+    }
+  }
+
+  let seg = 0;
+  msg.textContent = verificar ? "Conferindo na web..." : "Consultando a IA...";
+  const cron = setInterval(()=>{ seg++; msg.textContent = (verificar ? "Conferindo na web... " : "Consultando a IA... ") + seg + "s"; }, 1000);
+
+  const prompt = `Pesquise sobre concursos públicos brasileiros relacionados a: "${termo}".
 Responda APENAS com JSON:
 {"concursos":[{"orgao":"","cargo":"","ano":"","situacao":"aberto|previsto|encerrado",
 "tem_edital":true,"data_prova":"AAAA-MM-DD ou vazio","observacao":"","url_fonte":""}]}
@@ -1400,11 +1427,12 @@ Regras:
 - "aberto" = inscrições ou provas ainda por vir; "previsto" = anunciado mas sem edital;
   "encerrado" = provas já realizadas;
 - "tem_edital" = existe edital publicado;
-- url_fonte = página de onde tirou a informação;
 - não invente: se não tiver certeza da data, deixe vazio.`;
 
   try{
-    const resposta = await chamarGeminiBusca(prompt, 4096);
+    const resposta = await chamarGeminiBusca(prompt, 3072, !!verificar, (tent,total,espera)=>{
+      msg.textContent = `Google ocupado — tentativa ${tent} de ${total}, aguardando ${espera}s`;
+    });
     const obj = resposta.obj;
     listaConcursos = (obj.concursos || []).filter(c=> c && (c.cargo || c.orgao));
     if(!listaConcursos.length){
@@ -1413,25 +1441,27 @@ Regras:
       return;
     }
     renderListaConcursos();
-    if(resposta.semBusca){
-      const box2 = document.getElementById("busca-resultado");
-      box2.insertAdjacentHTML("afterbegin",
-        `<div class="status err">Limite de busca atingido — esta lista veio da memória da IA, sem consultar a web. Confira as datas antes de usar.</div>`);
+    if(!verificar){
+      box.insertAdjacentHTML("afterbegin",
+        `<div class="status info">Resposta rápida, sem consultar a web — pode estar desatualizada.
+           <button class="btn mini sec" style="margin-top:6px" onclick="buscarConcursos(true)">Conferir na web</button></div>`);
+      msg.textContent = "Rápido. Confira na web se quiser.";
+    } else {
+      gravarCache(termo, listaConcursos);
+      box.insertAdjacentHTML("afterbegin", `<div class="status ok">Conferido na web agora.</div>`);
+      msg.textContent = "Conferido.";
     }
-    msg.textContent = "Confira a situação e as fontes.";
   }catch(e){
     box.innerHTML = `<div class="card"><div class="status err">${e.message}</div>
-      <button class="btn sec mini" onclick="buscarConcursos()">Tentar de novo</button>
-      <div class="mini">Se persistir, é a cota gratuita da chave. Ela renova a cada minuto
-        (limite por minuto) e por dia. Aguarde e repita.</div></div>`;
+      <button class="btn mini sec" onclick="buscarConcursos()">Tentar de novo</button></div>`;
     msg.textContent = "Sem resultado.";
   }finally{ clearInterval(cron); }
 }
 
-async function escolherConcurso(i){
+async function escolherConcurso(i, verificar){
   const c = listaConcursos[i];
   if(!c) return;
-  if(c.detalhes){ concursoEscolhido = c; usarConcurso(); return; }
+  if(c.detalhes && !verificar){ concursoEscolhido = c; usarConcurso(); return; }
   concursoEscolhido = c;
   const box = document.getElementById("busca-resultado");
   box.innerHTML = `<div class="card"><div class="mini">Lendo as matérias de <b>${c.cargo}</b>...</div>
@@ -1440,6 +1470,7 @@ async function escolherConcurso(i){
   const alvo = document.getElementById("detalhe-msg");
   const cron = setInterval(()=>{ seg++; if(alvo) alvo.textContent = "aguarde " + seg + "s"; }, 1000);
 
+  const usarVerificacao = !!verificar;
   const base = c.tem_edital
     ? `o edital publicado do concurso ${c.orgao} ${c.cargo} ${c.ano}`
     : `o ÚLTIMO edital publicado e as últimas provas do concurso ${c.orgao} ${c.cargo} (não há edital novo ainda)`;
@@ -1454,7 +1485,7 @@ Regras:
 - entre 5 e 15 disciplinas; não invente matérias.`;
 
   try{
-    const resposta = await chamarGeminiBusca(prompt, 6144, true, (tent, total, espera, modelo)=>{
+    const resposta = await chamarGeminiBusca(prompt, 6144, !!verificar, (tent, total, espera, modelo)=>{
       const el = document.getElementById("detalhe-msg");
       if(el) el.textContent = `tentativa ${tent} de ${total} — Google ocupado, aguardando ${espera}s`;
     });
@@ -1475,6 +1506,11 @@ Regras:
       <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="buscarConcursos()">Voltar à lista</button>
     </div>`;
     concursoEscolhido.detalhes = {disciplinas: disc, dataProva: obj.data_prova || "", fontes: obj.fontes||[]};
+    if(!verificar){
+      box.insertAdjacentHTML("afterbegin",
+        `<div class="status info">Lista rápida, sem consultar a web.
+           <button class="btn mini sec" style="margin-top:6px" onclick="escolherConcurso(${i}, true)">Conferir na web</button></div>`);
+    }
   }catch(e){
     box.innerHTML = `<div class="card"><div class="status err">${e.message}</div>
       <button class="btn principal mini" onclick="escolherConcurso(${i})">Tentar de novo</button></div>
