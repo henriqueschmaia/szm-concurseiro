@@ -486,8 +486,7 @@
       </div>
       <button class="btn principal" style="width:100%;margin-top:10px" onclick="abrirAssistente()">
         ⚡ Montar meu plano</button>
-      <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="abrirMenu()">
-        acesso rápido</button>
+
       <div class="mini" id="basePlano" style="text-align:center"></div>
     </div>
     <div class="card" id="cardHoje">
@@ -768,7 +767,7 @@ const ROTINA_PADRAO = {
 let db = { sessoes:[], questoes:[], edital:{texto:"",disciplinas:[]},
            pesos:{}, planos:[], ativoId:null, apiKey:"", apiModel:"gemini-flash-lite-latest",
            avisos:[], planoInicio:null, cacheBuscas:{}, webStatus:"desconhecido", dificuldade:{},
-           metaDisciplina:{}, revisoes:[], versao:"v48",
+           metaDisciplina:{}, revisoes:[], versao:"v56",
            rotina: Object.assign({},ROTINA_PADRAO) };
 
 function carregar(){
@@ -1040,6 +1039,10 @@ function popularSelects(){
   atualizarSelectAssuntos();
   document.getElementById("q-data").value=hoje();
 }
+/* tira "1. ", "2.1 " etc. do começo do tópico, só para exibir */
+function tituloTopico(s){
+  return String(s||"").replace(/^\s*\d{1,2}(?:\.\d{1,2})*\s*[\.\)]?\s*/,"").trim();
+}
 function topicosDe(m){ const d=disciplinas().find(x=>x.nome===m); return d?d.topicos:[]; }
 function atualizarSelectAssuntos(){
   document.getElementById("q-assunto").innerHTML=topicosDe(document.getElementById("q-materia").value).map(t=>`<option>${t}</option>`).join("");
@@ -1064,7 +1067,7 @@ function renderHistorico(){
   if(!db.questoes.length){ box.textContent="Nenhuma bateria."; return; }
   box.innerHTML=[...db.questoes].reverse().slice(0,20).map((q,i)=>{
     const idx=db.questoes.length-1-i;
-    return `<div class="item"><span>${q.assunto} <span class="tag">${q.materia}</span><br>
+    return `<div class="item"><span>${tituloTopico(q.assunto)} <span class="tag">${q.materia}</span><br>
       <span style="color:#6B7280">${q.data} · ${q.acertos}/${q.total}</span></span><button onclick="apagarQuestao(${idx})">✕</button></div>`;
   }).join("");
 }
@@ -1095,7 +1098,7 @@ function definirMeta(nome, campo, valor){
   if(campo === "peso" && db.metaDisciplina[nome].peso < 1) db.metaDisciplina[nome].peso = 1;
   salvar();
 }
-/* peso usado no plano: questões da prova × peso do edital; sem isso, nº de submatérias */
+/* peso usado no plano: questões da prova × peso do edital; sem isso, nº de tópicos */
 function pesoBase(nome){
   const m = metaDe(nome);
   if(m.questoes > 0) return m.questoes * m.peso;
@@ -1115,7 +1118,7 @@ function renderPrioridades(){
   box.innerHTML=rk.length?rk.slice(0,15).map((s,i)=>{
     const cor=s.dif>=0.6?"#E86A6A":s.dif>=0.3?"#F5D06B":"#63BE7B";
     return `<div class="prio"><span class="bolinha" style="background:${cor}"></span>
-      <span class="nome">${i+1}. ${s.assunto}<br><span style="color:#6B7280;font-size:10.5px">${s.materia} · ${s.acertos}/${s.total}</span></span>
+      <span class="nome">${i+1}. ${tituloTopico(s.assunto)}<br><span style="color:#6B7280;font-size:10.5px">${s.materia} · ${s.acertos}/${s.total}</span></span>
       <span class="val" style="color:${cor}">${Math.round(s.dif*100)}%</span></div>`;
   }).join(""):`<div class="mini">Nenhum assunto com 5 questões ainda.</div>`;
   const porM={};
@@ -1276,8 +1279,9 @@ function renderRotinaTabela(){
 function atualizarJanela(){
   const j=janela();
   document.getElementById("p-janela").textContent = `${j.inicio.split("-").reverse().join("/")} → ${j.fim.split("-").reverse().join("/")}`;
-  document.getElementById("p-dias-lbl").textContent = `${j.dias} dias · ${j.motivo}`;
-  document.getElementById("p-msg2").textContent = j.motivo;
+  document.getElementById("p-dias-lbl").textContent = `${j.dias} dias`;
+  const msg2 = document.getElementById("p-msg2");
+  if(msg2) msg2.textContent = j.motivo;
 }
 /* ============================================================ ANEXAR EDITAL */
 async function anexarEdital(input, idTextarea, idMsg){
@@ -1470,7 +1474,7 @@ function renderChips(){
   const acoes = document.getElementById("acoesPlano");
   if(acoes) acoes.style.display = p ? "flex" : "none";
   document.getElementById("planoInfo").textContent = p
-    ? `${p.nome} · ${p.inicio.split("-").reverse().join("/")} a ${p.fim.split("-").reverse().join("/")} · ${p.dias} dias · ${p.horasSemana.toString().replace(".",",")} h/sem · ${p.origem}`
+    ? `${p.inicio.split("-").reverse().join("/")} a ${p.fim.split("-").reverse().join("/")} · ${p.dias} dias · ${p.horasSemana.toString().replace(".",",")} h/semana · ${p.origem}`
     : "Nenhum plano ativo.";
 }
 function ativarPlano(id){
@@ -1625,13 +1629,13 @@ function lerEdital(){
   db.pesos={}; disc.forEach(d=>db.pesos[d.nome]=Math.max(1,d.topicos.length));
   salvar(); renderPesos(); renderMaterias(); popularSelects();
   const tot=disc.reduce((a,d)=>a+d.topicos.length,0);
-  msg.textContent=`${disc.length} disciplinas e ${tot} submatérias reconhecidas.`;
+  msg.textContent=`${disc.length} disciplinas e ${tot} tópicos reconhecidas.`;
 }
 function renderPesos(){
   document.getElementById("pesos").innerHTML=disciplinas().map(d=>
     `<div class="linha"><label>${d.nome} <span class="tag">${d.topicos.length}</span></label>
       <input type="number" min="1" value="${db.pesos[d.nome]||1}" onchange="mudarPeso('${d.nome.replace(/'/g,"\\'")}',this.value)"></div>`).join("")+
-    `<div class="mini">Peso = nº de submatérias reconhecidas.</div>`;
+    `<div class="mini">Peso = nº de tópicos reconhecidas.</div>`;
 }
 function mudarPeso(n,v){
   db.pesos[n]=Math.max(1,parseInt(v||"1",10));
@@ -1685,7 +1689,7 @@ function compararEdital(){
   const linhas=[];
   novo.forEach(d=>{
     const velho=atual.find(x=>x.nome===d.nome);
-    if(!velho){ linhas.push(`<div style="color:#1F6B3A">+ disciplina nova: <b>${d.nome}</b> (${d.topicos.length} submatérias)</div>`); return; }
+    if(!velho){ linhas.push(`<div style="color:#1F6B3A">+ disciplina nova: <b>${d.nome}</b> (${d.topicos.length} tópicos)</div>`); return; }
     const novasT=d.topicos.filter(x=>!velho.topicos.includes(x));
     const foraT=velho.topicos.filter(x=>!d.topicos.includes(x));
     novasT.forEach(x=>linhas.push(`<div style="color:#1F6B3A">+ ${d.nome}: ${x}</div>`));
@@ -1701,10 +1705,10 @@ function compararEdital(){
   db._editalPendente={texto:txt, disciplinas:novo, prova: dataNova || null, mudouData: !!mudouData};
   diffBox.innerHTML = linhas.length
     ? linhas.join("")
-    : `<div style="color:#6B7280">Nenhuma diferença detectada nas disciplinas e submatérias.</div>`;
+    : `<div style="color:#6B7280">Nenhuma diferença detectada nas disciplinas e tópicos.</div>`;
   document.getElementById("btnAplicar").style.display="inline-block";
   const tot=novo.reduce((a,d)=>a+d.topicos.length,0);
-  msg.textContent=`Edital novo: ${novo.length} disciplinas, ${tot} submatérias. ${linhas.length} mudança(s).`;
+  msg.textContent=`Edital novo: ${novo.length} disciplinas, ${tot} tópicos. ${linhas.length} mudança(s).`;
 }
 function aplicarAtualizacao(){
   const pend=db._editalPendente;
@@ -2046,7 +2050,7 @@ Responda APENAS com JSON:
 {"disciplinas":[{"nome":"","topicos":["",""]}],"data_prova":"","compilado":true,"fontes":["url"]}
 Regras:
 - nomes das disciplinas como no Anexo I;
-- tópicos e submatérias conforme o edital;
+- tópicos e tópicos conforme o edital;
 - se não houver edital novo, monte com base no último edital e marque "compilado": true;
 - entre 5 e 15 disciplinas; não invente matérias.`;
 
@@ -2062,7 +2066,7 @@ Regras:
     const total = disc.reduce((a,d)=>a + (d.topicos||[]).length, 0);
     box.innerHTML = `<div class="card">
       <div class="status ${obj.compilado ? "info" : "ok"}">
-        ${obj.compilado ? "Compilado do último edital/provas" : "Edital encontrado"} — ${disc.length} disciplinas, ${total} submatérias.</div>
+        ${obj.compilado ? "Compilado do último edital/provas" : "Edital encontrado"} — ${disc.length} disciplinas, ${total} tópicos.</div>
       <div style="font-size:12px;font-weight:800;color:#0A2240;margin-bottom:6px">${c.cargo} · ${c.orgao} ${c.ano||""}</div>
       ${disc.map(d=>`<div style="margin-top:7px">
         <b style="font-size:11.5px;color:#0A2240">${d.nome}</b>
@@ -2110,7 +2114,7 @@ function usarConcurso(){
   const total = db.edital.disciplinas.reduce((a,d)=>a + d.topicos.length, 0);
   const campoNome = document.getElementById("p-nome");
   if(campoNome && !campoNome.value) campoNome.value = rotulo;
-  toast(`Aplicado: ${db.edital.disciplinas.length} disciplinas, ${total} submatérias`, "ok");
+  toast(`Aplicado: ${db.edital.disciplinas.length} disciplinas, ${total} tópicos`, "ok");
 }
 
 /* ============================================================ MESCLAGEM DE CARGOS */
@@ -2122,8 +2126,25 @@ function normalizarNome(s){
 function mesclarCargos(mapa, cargos){
   (cargos || []).forEach(c=>{
     if(!c || !c.nome) return;
-    const chave = normalizarNome(c.nome);
+    let chave = normalizarNome(c.nome);
     if(!chave) return;
+    // junta variações do mesmo cargo: "professor (30 horas)" e "professor (40 horas)" -> mesma chave
+    const primeira = chave.split(" ")[0];
+    if(primeira.length >= 5){
+      const palavras = chave.split(" ").filter(Boolean);
+      const existente = Object.keys(mapa).find(k=>{
+        if(k.split(" ")[0] !== primeira) return false;
+        if(k === chave) return true;
+        const kp = k.split(" ").filter(Boolean);
+        const menor = palavras.length <= kp.length ? palavras : kp;
+        const maior = palavras.length <= kp.length ? kp : palavras;
+        return menor.every(w=> maior.includes(w));
+      });
+      if(existente){
+        chave = existente;
+        if(String(c.nome).length > mapa[existente].nome.length) mapa[existente].nome = String(c.nome).trim();
+      }
+    }
     if(!mapa[chave]) mapa[chave] = { nome: String(c.nome).trim(), disciplinas: {} };
     (c.disciplinas || []).forEach(d=>{
       if(!d || !d.nome) return;
@@ -2137,6 +2158,227 @@ function mesclarCargos(mapa, cargos){
       });
     });
   });
+}
+
+/* ============================================================ TABELA COMO FONTE (genérica) */
+/* acha o cabeçalho "DISCIPLINA ... QUESTÕES" e lê as linhas, em qualquer banca */
+function lerTabelaQuestoes(texto, nomeCargo){
+  const base = String(texto || "");
+  if(!base) return [];
+  const semAcento = s => String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  const plano = semAcento(base);
+
+  // limpa prefixos de cabeçalho que grudam no nome da disciplina
+  const limparNome = (s)=>{
+    let n = String(s).replace(/\s+/g," ").trim();
+    for(let i=0;i<4;i++){
+      const antes = n;
+      n = n.replace(/^(disciplinas?|quest[oõ]es|m[oó]dulos? de conhecimentos?|conhecimentos?\s*(gerais|espec[ií]ficos?)?|gerais|espec[ií]ficos?|espec[ií]ficas?|cargo|fun[cç][aã]o|pontos?)\s*[:\-]?\s*/i,"").trim();
+      if(n === antes) break;
+    }
+    return n;
+  };
+  const WHITELIST = /(direito|portugu|matem|conheciment|inform[aá]tica|legisla|[ée]tica|racioc|atualidade|geografia|hist[oó]ria|ci[eê]ncia|biologia|f[ií]sica|qu[ií]mica|ingl[eê]s|espec[ií]fic|especifica|administra|contabil|pedagog|educa|sa[uú]de|enfermagem|estat[ií]stica|linguagem|tr[aâ]nsito|controle|auditoria|fiscal|tribut|previdenci|trabalh|processual|penal|civil|constitucional|humanos|empreendedor|gest[aã]o|comunica|reda[cç][aã]o|t[eé]cnic|contabilidade|finan[cç]|or[cç]ament)/i;
+
+  const cabecalhos = [];
+  let m;
+  const reCab = /disciplinas?/g;
+  while((m = reCab.exec(plano)) !== null){
+    if(/quest/.test(plano.slice(m.index, m.index + 120))) cabecalhos.push(m.index);
+    if(cabecalhos.length >= 40) break;
+  }
+
+  for(const pos of cabecalhos){
+    let regiao = base.slice(pos, pos + 2500);
+    // corta só em quebra de página ou em outro cabeçalho de tabela
+    const corte = regiao.search(/P[aá]gina\s+\d+\s+de|disciplinas?\s+(total\s+de\s+)?quest/i);
+    if(corte > 80) regiao = regiao.slice(0, corte);
+
+    const re = /([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-Za-zÀ-ÿ0-9°º\s\/\-,.']{2,60}?)\s+(\d{1,3})(?:[.,]\d+)?/g;
+    const linhas = []; let mm;
+    while((mm = re.exec(regiao)) !== null){
+      const nome = limparNome(mm[1]);
+      const n = parseInt(mm[2],10);
+      if(nome.length < 4 || n < 2 || n > 120) continue;
+      if(nome.split(/\s+/).length > 7) continue;
+      if(!WHITELIST.test(nome)) continue;
+      if(linhas.some(l=> semAcento(l.nome) === semAcento(nome))) continue;
+      linhas.push({nome, questoes:n});
+      if(linhas.length >= 20) break;
+    }
+    const soma = linhas.reduce((a,l)=>a+l.questoes,0);
+    if(linhas.length >= 3 && soma >= 20 && soma <= 250){
+      return linhas;
+    }
+  }
+
+  // RESERVA: sem cabeçalho "DISCIPLINA", procura janelas com linhas de disciplina + número
+  const janelas = [];
+  const reJan = /quest[oõ]es|itens|n[°ºo]?\s*\.?\s*de\s*quest|componentes\s+das\s+provas|composi[cç][aã]o\s+das\s+provas|[aá]rea\s+de\s+conhecimento/gi;
+  let mj;
+  while((mj = reJan.exec(plano)) !== null) janelas.push(mj.index);
+  for(const pos of janelas.slice(0, 40)){
+    const regiao = base.slice(pos, pos + 1800);
+    const re = /([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-Za-zÀ-ÿ0-9°º\s\/\-,.']{2,60}?)\s+(\d{1,3})(?:[.,]\d+)?/g;
+    const linhas = []; let mm;
+    while((mm = re.exec(regiao)) !== null){
+      const nome = limparNome(mm[1]);
+      const n = parseInt(mm[2],10);
+      if(nome.length < 4 || n < 2 || n > 120) continue;
+      if(nome.split(/\s+/).length > 7) continue;
+      if(!WHITELIST.test(nome)) continue;
+      if(linhas.some(l=> semAcento(l.nome) === semAcento(nome))) continue;
+      linhas.push({nome, questoes:n});
+      if(linhas.length >= 20) break;
+    }
+    const soma = linhas.reduce((a,l)=>a+l.questoes,0);
+    if(linhas.length >= 3 && soma >= 20 && soma <= 250) return linhas;
+  }
+  return [];
+}
+
+/* dedupe final da lista de cargos (variações do mesmo nome) */
+function dedupeCargos(lista){
+  const saida = [];
+  (lista || []).forEach(c=>{
+    if(!c || !c.nome) return;
+    const p1 = normalizarNome(c.nome).split(" ").filter(Boolean);
+    if(!p1.length) return;
+    const igual = saida.find(x=>{
+      const p2 = normalizarNome(x.nome).split(" ").filter(Boolean);
+      if(!p2.length || p2[0] !== p1[0]) return false;
+      const menor = p1.length <= p2.length ? p1 : p2;
+      const maior = p1.length <= p2.length ? p2 : p1;
+      return menor.every(w=> maior.includes(w));
+    });
+    if(igual){
+      const mapa = {};
+      mesclarCargos(mapa, [{nome:igual.nome, disciplinas:igual.disciplinas||[]}]);
+      mesclarCargos(mapa, [{nome:c.nome, disciplinas:c.disciplinas||[]}]);
+      const k = Object.keys(mapa)[0];
+      igual.disciplinas = Object.values(mapa[k].disciplinas);
+      if(String(c.nome).length > igual.nome.length) igual.nome = String(c.nome).trim();
+    } else {
+      saida.push({nome:c.nome, nivel:c.nivel, disciplinas:c.disciplinas||[]});
+    }
+  });
+  return saida;
+}
+
+/* ============================================================ REFINO DAS MATÉRIAS *//* ============================================================ REFINO DAS MATÉRIAS */
+/* detecta quando a leitura veio agrupada em módulos, e não em disciplinas de prova */
+function pareceModulo(disc){
+  if(!disc || !disc.length) return false;
+  const modulos = disc.filter(d=> /^(conhecimentos|no[cç][oõ]es gerais|m[oó]dulo|bloco)/i.test(d.nome)).length;
+  return modulos >= 1 || disc.length <= 3;
+}
+/* trecho do edital onde ficam as questões por disciplina */
+function trechoTabelaQuestoes(texto){
+  const baixo = String(texto||"").toLowerCase();
+  const alvos = [/distribui[cç][aã]o das quest/, /provas? objetivas?/, /n[uú]mero\s*\/?\s*quest/, /quadro de provas/];
+  for(const re of alvos){
+    const i = baixo.search(re);
+    if(i >= 0) return String(texto).slice(i, i + 3000);
+  }
+  return "";
+}
+/* pede à IA para reorganizar no nível de disciplina de prova, com as questões */
+async function refinarMaterias(texto, nomeCargo, disc){
+  if(!disc || !disc.length) return disc;
+  const tabela = trechoTabelaQuestoes(texto);
+  const oficial = lerTabelaQuestoes(texto, nomeCargo);
+
+  // se a tabela do edital lista as disciplinas, ela manda
+  if(oficial.length >= 3){
+    const listaOficial = oficial.map(o=> o.nome + " — " + o.questoes + " questões").join("\n");
+    const promptOficial = `O edital lista as disciplinas da prova na tabela abaixo. Use EXATAMENTE esses nomes,
+nesta ordem, um item por disciplina. Distribua os tópicos existentes entre elas.
+Responda APENAS com JSON:
+{"disciplinas":[{"nome":"","questoes":0,"topicos":[""]}]}
+Regras:
+- escolha APENAS as disciplinas que pertencem ao cargo ${nomeCargo || "escolhido"} (a tabela pode ter vários cargos);
+- use os nomes da tabela sem alterar;
+- não crie disciplina fora da lista; não invente tópicos.
+
+DISCIPLINAS DA TABELA DO EDITAL:
+${listaOficial}
+
+TÓPICOS DISPONÍVEIS (redistribua):
+${JSON.stringify(disc.map(d=>({materia:d.nome, topicos:(d.topicos||[]).slice(0,40)}))).slice(0,6000)}`;
+    try{
+      const obj = await chamarUmaVez(promptOficial, 8192, 20000);
+      let novas = (obj.disciplinas || []).filter(d=> d && d.nome)
+        .map(d=>({
+          nome: limparTextoEdital(d.nome),
+          topicos: (d.topicos||[]).map(limparTextoEdital).filter(Boolean),
+          questoes: Number(d.questoes) || 0
+        }));
+      // garante que toda disciplina da tabela exista
+      oficial.forEach(o=>{
+        const chave = normalizarNome(o.nome);
+        const achou = novas.find(n=> normalizarNome(n.nome) === chave || normalizarNome(n.nome).includes(chave) || chave.includes(normalizarNome(n.nome)));
+        if(achou){ achou.nome = o.nome; achou.questoes = o.questoes; }
+        else novas.push({nome:o.nome, topicos:[], questoes:o.questoes});
+      });
+      if(novas.length){
+        novas.forEach(d=>{ if(d.questoes > 0) definirMeta(d.nome, "questoes", d.questoes); });
+        return novas.map(d=>({nome:d.nome, topicos:d.topicos}));
+      }
+    }catch(e){ /* cai para o refino genérico */ }
+  }
+
+  if(!db.apiKey) return disc;
+  const prompt = `Um edital de concurso foi lido e as matérias saíram AGRUPADAS EM MÓDULOS.
+Reorganize no nível de DISCIPLINA DE PROVA (o que o candidato estuda de fato).
+Para cada disciplina: nome, quantas questões caem na prova (0 se não encontrar) e quais tópicos pertencem a ela.
+Responda APENAS com JSON:
+{"disciplinas":[{"nome":"","questoes":0,"topicos":[""]}]}
+Regras:
+- não invente tópicos: redistribua os que já existem;
+- use os nomes das disciplinas como aparecem na tabela do edital, quando houver;
+- se o edital não separar, mantenha a matéria como está.
+
+MATÉRIAS COMO VIERAM:
+${JSON.stringify(disc.map(d=>({materia:d.nome, topicos:(d.topicos||[]).slice(0,40)}))).slice(0,6000)}
+
+TRECHO DA TABELA DE QUESTÕES DO EDITAL:
+${tabela.slice(0,2500)}
+
+CARGO: ${nomeCargo || ""}`;
+
+  try{
+    const obj = await chamarUmaVez(prompt, 8192, 20000);
+    const novas = (obj.disciplinas || []).filter(d=> d && d.nome && (d.topicos||[]).length)
+      .map(d=>({
+        nome: limparTextoEdital(d.nome),
+        topicos: (d.topicos||[]).map(limparTextoEdital).filter(Boolean),
+        questoes: Number(d.questoes) || 0
+      }));
+    if(!novas.length) return disc;
+    // guarda as questões da prova
+    novas.forEach(d=>{ if(d.questoes > 0) definirMeta(d.nome, "questoes", d.questoes); });
+    return novas.map(d=>({nome:d.nome, topicos:d.topicos}));
+  }catch(e){
+    return disc;
+  }
+}
+/* aplica o refino ao cargo escolhido (chamado automaticamente) */
+async function refinarCargoAtual(texto, nomeCargo){
+  const disc = disciplinas();
+  if(!pareceModulo(disc)) return false;
+  const novas = await refinarMaterias(texto, nomeCargo, disc);
+  if(!novas || novas.length === disc.length && novas.every((d,i)=> d.nome === disc[i].nome)) return false;
+  db.edital.disciplinas = novas;
+  db.pesos = {};
+  novas.forEach(d=> db.pesos[d.nome] = Math.max(1, d.topicos.length));
+  // completa questões que ainda faltarem pela tabela
+  const faltando = novas.filter(d=> metaDe(d.nome).questoes === 0).map(d=>d.nome);
+  if(faltando.length){
+    const daTabela = extrairQuestoesDoEdital(texto, faltando, nomeCargo);
+    Object.keys(daTabela).forEach(n=> definirMeta(n, "questoes", daTabela[n]));
+  }
+  salvar(); renderPesos(); renderMaterias(); popularSelects();
+  return true;
 }
 
 /* ============================================================ CATÁLOGO DE EDITAIS */
@@ -2163,7 +2405,7 @@ async function carregarCatalogo(forcar){
       </div>`).join("");
     if(box) box.innerHTML = html;
     const boxWz = document.getElementById("wz-corpo");
-    if(boxWz && !document.getElementById("assistente").classList.contains("oculto")){
+    if(boxWz && WZ.modo === "catalogo" && !document.getElementById("assistente").classList.contains("oculto")){
       boxWz.innerHTML = `<h4>Concursos prontos</h4>
         <p class="sub">Escolha um — as matérias já estão processadas.</p>` +
         lista.map(c=>`<button class="wz-op" onclick="usarCatalogo('${c.id}', true)">
@@ -2257,12 +2499,12 @@ ${blocos[i]}`;
     }
   }
 
-  const cargos = Object.values(mapa).map(c=>({
+  let cargos = Object.values(mapa).map(c=>({
     nome: c.nome,
     nivel: /t[ée]cnico|m[ée]dio|auxiliar/i.test(c.nome) ? "médio" : "superior",
     disciplinas: Object.values(c.disciplinas)
-  })).filter(c=> c.disciplinas.length)
-    .sort((a,b)=> b.disciplinas.length - a.disciplinas.length);
+  })).filter(c=> c.disciplinas.length);
+  cargos = dedupeCargos(cargos).sort((a,b)=> b.disciplinas.length - a.disciplinas.length);
 
   return {cargos, falhas, blocos: blocos.length};
 }
@@ -2325,6 +2567,7 @@ function extrairQuestoesDoEdital(texto, nomes, nomeCargo){
   if(!regiao){
     const plano = semAcento(texto);
     let inicio = plano.search(/distribuicao das questoes por disciplina|quadro de provas/i);
+    if(inicio < 0) inicio = plano.search(/provas objetivas\s*-|numero\s*\/?\s*questoes|n[uú]mero\s*\/?\s*quest/);
     if(inicio < 0) inicio = plano.search(/modulo de conhecimentos gerais/);
     if(inicio < 0) inicio = 0;
     let trecho = texto.slice(inicio);
@@ -2395,6 +2638,20 @@ function detectarCargosEdital(texto){
   while((m = re.exec(texto)) !== null){
     const nome = limparNomeCargo(m[1]);
     if(nome.length > 4 && !nomes.some(n=> n.toLowerCase() === nome.toLowerCase())) nomes.push(nome);
+  }
+  // reserva: cargos em tabelas "CARGO ... VAGAS" ou "Cargo/Especialidade"
+  if(!nomes.length){
+    const CABECAS = /(ANALISTA|T[ÉE]CNICO|OFICIAL|M[ÉE]DICO|PSIC[ÓO]LOGO|ARQUITETO|ASSISTENTE|ENFERMEIRO|ENGENHEIRO|CONTADOR|ADVOGADO|AUDITOR|DELEGADO|ESCRIV[ÃA]O|PROFESSOR|FISCAL|AGENTE|BIBLIOTEC[ÁA]RIO|NUTRICIONISTA|DENTISTA|VETERIN[ÁA]RIO|JORNALISTA|PROGRAMADOR|DESIGNER|T[ÉE]CNICO|AUXILIAR|ASSISTENTE|ESCRIV[ÃA]O|PESQUISADOR|TECNOLOGISTA)/gi;
+    let mc;
+    while((mc = CABECAS.exec(texto)) !== null){
+      const inicio = texto.lastIndexOf("\n", mc.index) + 1;
+      const fim = texto.indexOf("\n", mc.index);
+      const linha = texto.slice(inicio, fim > 0 ? fim : mc.index + 80).trim();
+      const nome = limparNomeCargo(linha);
+      if(nome.length > 5 && nome.length < 60 && !/\d{3}/.test(nome) &&
+         !nomes.some(n=> normalizarNome(n) === normalizarNome(nome))) nomes.push(nome);
+      if(nomes.length >= 40) break;
+    }
   }
   return nomes.map(nome=>({
     nome,
@@ -2564,6 +2821,12 @@ ${bloco}`;
   }
 
   cargosEncontrados[i].disciplinas = disc;
+  if(pareceModulo(disc)){
+    _progressoCargo("organizando as disciplinas…", 0);
+    await refinarCargoAtual(texto, c.nome);
+    disc = disciplinas();
+    cargosEncontrados[i].disciplinas = disc;
+  }
   const total = disc.reduce((a,d)=>a+(d.topicos||[]).length, 0);
   _pintarCargo(`<div class="card" style="padding:12px">
     <div class="status ok">${disc.length} disciplinas, ${total} tópicos${origem ? " (" + origem + ")" : ""}</div>
@@ -2605,7 +2868,7 @@ function usarCargo(i){
   const total = disc.reduce((a,d)=>a + d.topicos.length, 0);
   toast(`${c.nome}: ${disc.length} disciplinas aplicadas`, "ok");
   document.getElementById("cargo-msg").textContent =
-    `Aplicado: ${c.nome} — ${disc.length} disciplinas, ${total} submatérias. Agora gere o plano.`;
+    `Aplicado: ${c.nome} — ${disc.length} disciplinas, ${total} tópicos. Agora gere o plano.`;
   document.getElementById("listaCargos").innerHTML = "";
 }
 
@@ -2656,21 +2919,21 @@ Regras:
   2) o PESO que o edital dá à matéria (peso 2 = o dobro do peso 1);
   3) a dificuldade que o aluno DECLAROU (0=fácil, 5=difícil);
   4) o desempenho medido (quem erra mais recebe mais tempo).
-  Se o edital não informar questões, use o número de submatérias como peso.
-- Use as submatérias fornecidas; não invente.
+  Se o edital não informar questões, use o número de tópicos como peso.
+- Use as tópicos fornecidas; não invente.
 - Nomeie o plano com o cargo e o prazo, em até 40 caracteres${nomeEscolhido()?`. Use EXATAMENTE este nome: "${nomeEscolhido()}"`:""}.
 - Formato exato:
 {"nome":"Plano IA 1","inicio":"${j.inicio}","fim":"${j.fim}","dias":${j.dias},
  "ciclo":{"1":[{"materia":"...","topico":"...","horas":1.5}],"2":[],"3":[],"4":[],"5":[],"6":[],"0":[]}}
 
-Disciplinas (questões na prova, peso do edital, dificuldade declarada, questões já feitas e submatérias):
+Disciplinas (questões na prova, peso do edital, dificuldade declarada, questões já feitas e tópicos):
 ${JSON.stringify(disciplinas().map(d=>({
   nome:d.nome,
   questoes_prova: metaDe(d.nome).questoes,
   peso_edital: metaDe(d.nome).peso,
   dificuldade: dificuldadeDe(d.nome),
   questoes_feitas: (db.questoes.filter(q=>q.materia===d.nome).reduce((a,q)=>a+q.total,0)),
-  submatérias: d.topicos.length
+  tópicos: d.topicos.length
 })))}
 Dificuldade medida (1 = erra tudo): ${JSON.stringify(statsPorAssunto().map(s=>({a:s.assunto,d:+(1-s.acertos/s.total).toFixed(2)})))}`;
 
@@ -2959,7 +3222,7 @@ function renderRevisoes(){
   }
   box.innerHTML = pend.slice(0,8).map(r=>`
     <div class="rev">
-      <span class="t">${r.topico || r.materia}<small>${r.topico ? r.materia : ""} · revisão de ${r.nivel} dia(s)</small></span>
+      <span class="t">${tituloTopico(r.topico) || r.materia}<small>${r.topico ? r.materia : ""} · revisão de ${r.nivel} dia(s)</small></span>
       <button class="no" onclick="responderRevisao('${r.id}',false)">errei</button>
       <button class="ok" onclick="responderRevisao('${r.id}',true)">acertei</button>
     </div>`).join("") +
@@ -3024,7 +3287,7 @@ function renderCadernoErros(){
   }
   box.innerHTML = fracos.slice(0,6).map((x,i)=>`
     <div class="rev">
-      <span class="t">${x.assunto}<small>${x.materia} · ${x.acertos}/${x.total} (${Math.round(x.erro*100)}% de erro)</small></span>
+      <span class="t">${tituloTopico(x.assunto)}<small>${x.materia} · ${x.acertos}/${x.total} · ${Math.round((1-x.erro)*100)}% de acerto</small></span>
       <button class="ok" onclick="revisarPontoFraco(${i})">revisar</button>
     </div>`).join("");
 }
@@ -3310,6 +3573,7 @@ const WZ_TITULOS = ["", "Seu edital", "Dificuldade", "Questões da prova", "Sua 
 
 function abrirAssistente(){
   WZ.passo = 1;
+  WZ.modo = "";
   document.getElementById("assistente").classList.remove("oculto");
   renderWizard();
 }
@@ -3318,6 +3582,7 @@ function fecharAssistente(){
 }
 function wzIr(passo){
   WZ.passo = Math.max(1, Math.min(6, passo));
+  WZ.modo = "";
   renderWizard();
   const corpo = document.getElementById("wz-corpo");
   if(corpo) corpo.scrollTop = 0;
@@ -3346,7 +3611,7 @@ function renderWizard(){
 function wzPasso1(c){
   c.innerHTML = `
     <h4>Você já tem o edital?</h4>
-    <p class="sub">A partir dele eu monto as matérias, as submatérias e distribuo suas horas de estudo.</p>
+    <p class="sub">A partir dele eu monto as matérias, os tópicos e distribuo suas horas de estudo.</p>
     <button class="wz-op" onclick="wzEscolherFonte('pdf')">
       <span class="em">📄</span><span class="tx"><b>Tenho o PDF</b><span>anexar o arquivo do edital</span></span></button>
     <button class="wz-op" onclick="wzEscolherFonte('colar')">
@@ -3392,6 +3657,7 @@ function wzEscolherFonte(fonte){
     return;
   }
   if(fonte === "catalogo"){
+    WZ.modo = "catalogo";
     const c = document.getElementById("wz-corpo");
     c.innerHTML = `<h4>Concursos prontos</h4><p class="sub">carregando…</p>`;
     carregarCatalogo(true);
@@ -3601,8 +3867,16 @@ ${bloco}`;
   WZ.disciplinas = disc;
   WZ.cargoEscolhido = cargo.nome;
 
-  const total = disc.reduce((a,d)=>a + d.topicos.length, 0);
-  toast(cargo.nome + ": " + disc.length + " disciplinas de " + total + " tópicos", "ok");
+  // se veio agrupado em módulos, refina automaticamente
+  if(pareceModulo(disc)){
+    const el = document.getElementById("wz-aguarde");
+    if(el) el.textContent = "organizando as disciplinas…";
+    const mudou = await refinarCargoAtual(WZ.textoEdital || "", cargo.nome);
+    if(mudou) toast("Matérias organizadas por disciplina", "ok");
+  }
+
+  const total = disciplinas().reduce((a,d)=>a + d.topicos.length, 0);
+  toast(cargo.nome + ": " + disciplinas().length + " disciplinas de " + total + " tópicos", "ok");
   wzIr(2);
 }
 
@@ -3629,7 +3903,7 @@ function wzPassoDificuldade(c){
       Comecei todas no 3 — arraste as que você sente diferença.</p>
     ${disc.map((d,i)=>`
       <div class="slider">
-        <span class="nm">${d.nome}<small>${d.topicos.length} submatérias${totalQ[d.nome]?(" · "+totalQ[d.nome]+" questões feitas"):""}</small></span>
+        <span class="nm">${d.nome}<small>${d.topicos.length} tópicos${totalQ[d.nome]?(" · "+totalQ[d.nome]+" questões feitas"):""}</small></span>
         <input type="range" min="0" max="5" step="1" value="${dificuldadeDe(d.nome)}"
                oninput="wzMudarDificuldade('${d.nome.replace(/'/g,"\\'")}', this.value)">
         <span class="val" id="wz-nivel-${i}">${dificuldadeDe(d.nome)}</span>
@@ -3657,7 +3931,7 @@ function wzPassoQuestoes(c){
   c.innerHTML = `
     <h4>Quantas questões caem de cada matéria?</h4>
     <p class="sub">Se o edital informar o número de questões e o peso de cada disciplina, coloque aqui.
-      Se não souber, deixe em branco — eu uso o número de submatérias como peso.</p>
+      Se não souber, deixe em branco — eu uso o número de tópicos como peso.</p>
     ${preenchidas ? `<div class="status ok" style="margin-bottom:10px">${preenchidas} matéria(s) já preenchidas.</div>` : ""}
     ${disc.map(d=>{
       const m = metaDe(d.nome);
@@ -3674,7 +3948,7 @@ function wzPassoQuestoes(c){
       </div>`;
     }).join("")}
     <div class="mini">Fórmula: <b>peso da matéria = questões × peso do edital</b>, ajustado pela sua dificuldade.
-      Sem esse dado, uso o número de submatérias.</div>`;
+      Sem esse dado, uso o número de tópicos.</div>`;
 
   wzRodape(`<button class="btn principal" style="width:100%" onclick="wzIr(4)">Continuar</button>
     <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="wzIr(2)">Voltar</button>`);
@@ -3797,18 +4071,18 @@ function wzPasso4(c){
     <h4>Está tudo certo?</h4>
     <p class="sub">É com isso que eu vou montar o plano.</p>
     <div class="resumo-plano">
-      <b>${disc.length} disciplinas · ${total} submatérias</b>
+      <b>${disc.length} disciplinas · ${total} tópicos</b>
       <div>Cargo/base: ${(db.edital && db.edital.nome) || "lista padrão"}</div>
       <div>Período: ${j.inicio.split("-").reverse().join("/")} a ${j.fim.split("-").reverse().join("/")} (${j.dias} dias)</div>
       <div>Disponibilidade: <b>${horas.toString().replace(".",",")} h por semana</b></div>
     </div>
-    <div class="mini" style="margin-bottom:8px"><b>Pesos (nº de submatérias):</b> ${top.map(d=>`${d.nome} ${db.pesos[d.nome]||1}`).join(" · ")}</div>
+    <div class="mini" style="margin-bottom:8px"><b>Pesos (nº de tópicos):</b> ${top.map(d=>`${d.nome} ${db.pesos[d.nome]||1}`).join(" · ")}</div>
     <button class="btn sec mini" style="width:100%;margin-bottom:10px" onclick="abrirEditor()">
       ✎ Conferir / corrigir matérias</button>
     <div class="mini" style="margin-bottom:8px"><b>Questões da prova:</b> ${
       disc.filter(d=> metaDe(d.nome).questoes > 0).length
         ? disc.filter(d=>metaDe(d.nome).questoes>0).map(d=>`${d.nome} ${metaDe(d.nome).questoes}${metaDe(d.nome).peso>1?("×"+metaDe(d.nome).peso):""}`).join(" · ")
-        : "não informadas — usando nº de submatérias"
+        : "não informadas — usando nº de tópicos"
     }</div>
     <div class="mini" style="margin-bottom:8px"><b>Dificuldade que você marcou:</b> ${
       disc.filter(d=>dificuldadeDe(d.nome) !== 3)
@@ -3886,11 +4160,11 @@ function abrirConfirma(){
 
   document.getElementById("confirmaConteudo").innerHTML = `
     <div class="resumo-plano">
-      <b>${disc.length} disciplinas · ${total} submatérias</b>
+      <b>${disc.length} disciplinas · ${total} tópicos</b>
       <div>Base: o edital que você carregou.</div>
       <div>Período: ${j.inicio.split("-").reverse().join("/")} a ${j.fim.split("-").reverse().join("/")} (${j.dias} dias).</div>
       <div>Sua rotina permite <b>${horas.toString().replace(".",",")} h por semana</b>.</div>
-      <div>As horas são divididas pelo peso (nº de submatérias), com ajuste pela sua dificuldade nas questões.</div>
+      <div>As horas são divididas pelo peso (nº de tópicos), com ajuste pela sua dificuldade nas questões.</div>
     </div>
     <div class="mini" style="margin-bottom:10px">
       Maiores pesos agora: ${topPesos.map(d=>`${d.nome} (${db.pesos[d.nome]||1})`).join(" · ")}
@@ -3914,7 +4188,7 @@ function atualizarBase(){
   const total = disc.reduce((a,d)=>a+(d.topicos||[]).length, 0);
   const temEdital = db.edital && db.edital.disciplinas && db.edital.disciplinas.length;
   el.textContent = temEdital
-    ? `${disc.length} disciplinas · ${total} submatérias carregadas`
+    ? `${disc.length} disciplinas · ${total} tópicos carregados`
     : "Nenhum edital carregado ainda";
 }
 
@@ -3948,6 +4222,7 @@ function renderChips2(){
     : "";
 }
 function renderHoje(){
+  renderRevisoes();
   const box = document.getElementById("hojeBlocos");
   const status = document.getElementById("statusPlano");
   const feito = document.getElementById("hojeFeito");
@@ -3992,7 +4267,7 @@ function renderHoje(){
       const ok = p.feitos && p.feitos[chaveBloco(d,i)];
       return `<div class="bloco ${ok?'feito':''}">
         <button class="chk" onclick="marcarBloco(${i})">${ok?'✓':'○'}</button>
-        <div class="txt">${b.materia}<small>${b.topico||""} · ${b.horas.toString().replace(".",",")} h</small></div>
+        <div class="txt">${b.materia}<small>${tituloTopico(b.topico)} · ${b.horas.toString().replace(".",",")} h</small></div>
       </div>`;
     }).join("");
   }
@@ -4002,8 +4277,17 @@ function renderHoje(){
     if(!sessoes.length) feito.textContent = "Nada registrado ainda hoje.";
     else {
       const total = sessoes.reduce((a,s)=>a+s.minutos,0);
-      feito.innerHTML = `<b>${(total/60).toFixed(2).replace(".",",")} h</b> em ${sessoes.length} sessão(ões): ` +
-        sessoes.map(s=>`${s.materia} ${s.minutos}min`).join(" · ");
+      const porMateria = {};
+      sessoes.forEach(s=>{ porMateria[s.materia] = (porMateria[s.materia]||0) + s.minutos; });
+      const linhas = Object.entries(porMateria)
+        .sort((a,b)=> b[1]-a[1])
+        .map(([m,min])=>`<div class="rev" style="border:0;padding:4px 0">
+            <span class="t">${m}</span>
+            <span style="font-weight:700;color:#17798A">${(min/60).toFixed(1).replace(".",",")} h</span>
+          </div>`).join("");
+      feito.innerHTML = `<b>${(total/60).toFixed(1).replace(".",",")} h</b> em ${sessoes.length} sessão(ões)` +
+        (Object.keys(porMateria).length > 1 ? ` · ${Object.keys(porMateria).length} matérias` : "") +
+        linhas;
     }
   }
 }
