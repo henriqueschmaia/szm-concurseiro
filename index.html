@@ -171,15 +171,21 @@
   .wz-op .tx span{font-size:11.5px;color:#6B7280}
   .wz-rodape{padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--borda)}
   .wz-campo{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:13px;margin-bottom:10px}
-  .slider{display:flex;align-items:center;gap:10px;margin:11px 0}
-  .slider .nm{flex:1;font-size:12.5px;color:#12233A;line-height:1.25}
+  .slider{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:11px 0;width:100%;max-width:100%}
+  .slider .nm{flex:1 1 100%;min-width:0;font-size:12.5px;color:#12233A;line-height:1.25}
+  /* o range ocupa só o que sobra: nunca empurra o valor para fora da tela */
+  .slider input[type=range]{flex:1 1 0;min-width:0;width:0}
   .slider .nm small{display:block;color:#8A9AAF;font-size:10px}
-  .slider input[type=range]{-webkit-appearance:none;appearance:none;width:118px;height:9px;
+  .slider input[type=range]{-webkit-appearance:none;appearance:none;height:9px;
     border-radius:99px;background:linear-gradient(90deg,#3FA86A,#8ED08A,#FFE27A,#F5A24B,#E2543F);
     border:0;padding:0;outline:none}
   .slider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;
     border-radius:50%;background:#fff;border:3px solid #0A2240;box-shadow:0 2px 6px rgba(10,34,64,.28)}
-  .slider .val{width:24px;text-align:center;font-weight:800;font-size:13px;color:#0A2240}
+  .slider .val{flex:0 0 22px;width:22px;text-align:center;font-weight:800;font-size:13px;color:#0A2240}
+  .slider .bt{flex:0 0 26px;width:26px;height:26px;min-width:26px;padding:0;border-radius:50%;border:1px solid var(--linha);
+    background:#fff;color:var(--ink);font-size:15px;font-weight:800;line-height:1;display:flex;
+    align-items:center;justify-content:center}
+  .slider .bt:active{transform:scale(.93);background:#EEF3F8}
   .rev{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #EFF3F8}
   .rev:last-child{border-bottom:0}
   .rev .t{flex:1;font-size:12.5px;line-height:1.3}
@@ -824,7 +830,7 @@ const ROTINA_PADRAO = {
 let db = { sessoes:[], questoes:[], edital:{texto:"",disciplinas:[]},
            pesos:{}, planos:[], ativoId:null, apiKey:"", apiModel:"gemini-flash-lite-latest",
            avisos:[], planoInicio:null, cacheBuscas:{}, webStatus:"desconhecido", dificuldade:{},
-           metaDisciplina:{}, revisoes:[], versao:"v66",
+           metaDisciplina:{}, revisoes:[], versao:"v72",
            rotina: Object.assign({},ROTINA_PADRAO) };
 
 function carregar(){
@@ -842,6 +848,11 @@ function carregar(){
   db.sessoes=db.sessoes||[]; db.questoes=db.questoes||[]; db.planos=db.planos||[];
   db.edital=db.edital||{texto:"",disciplinas:[]};
   db.rotina=Object.assign({},ROTINA_PADRAO,db.rotina||{});
+  // campos que podem faltar em dados antigos
+  db.dificuldade = (db.dificuldade && typeof db.dificuldade === "object") ? db.dificuldade : {};
+  db.metaDisciplina = (db.metaDisciplina && typeof db.metaDisciplina === "object") ? db.metaDisciplina : {};
+  db.ultimoTopico = (db.ultimoTopico && typeof db.ultimoTopico === "object") ? db.ultimoTopico : {};
+  db.topicoUso = (db.topicoUso && typeof db.topicoUso === "object") ? db.topicoUso : {};
   db.avisos = db.avisos || [];
   db.cacheBuscas = db.cacheBuscas || {};
   db.webStatus = db.webStatus || "desconhecido";
@@ -944,7 +955,9 @@ function disponibilidade(){
     if((r.treinoDias||[]).includes(d)) livre -= (r.treinoDur||0)/60;
     livre -= (r.desloc||0)/60;
     const TETO_DIA = 6;   // teto realista de estudo por dia
-    out[d] = Math.max(0, Math.min(TETO_DIA, +livre.toFixed(1)));
+    // arredonda para baixo em passos de 0,5 h: 18 min livres não viram bloco
+    const q = Math.floor(Math.max(0, livre) * 2) / 2;
+    out[d] = Math.max(0, Math.min(TETO_DIA, q));
   }
   // dia de folga escolhido pelo usuário não recebe estudo
   if(r.configurada && Array.isArray(r.folgas)){
@@ -959,12 +972,8 @@ function emFeriasTrab(d){
 function metaDoDia(d){
   if(FERIADOS.includes(d)) return 0;
   const r=db.rotina;
-  if(!r.configurada){
-    // regra antiga, quando a rotina não foi preenchida
-    const w=dow(d); if(w===0) return 0; if(w===6) return 4;
-    return 3;
-  }
-  if(r.folgas.includes(dow(d))) return 0;
+  // fonte única: a mesma disponibilidade que o gerador de plano usa
+  if(Array.isArray(r.folgas) && r.folgas.includes(dow(d))) return 0;
   let h = disponibilidade()[dow(d)];
   if(emFeriasTrab(d) && (r.trabDias||[1,2,3,4,5]).includes(dow(d)))
     h = Math.min(12, h + minutosEntre(r.trabIni,r.trabFim)/60);
@@ -1237,8 +1246,11 @@ function renderRegistro(){
 }
 function lancar(d,m,v){
   const alvo=Math.min(1440, Math.max(0, parseInt(v||"0",10)||0));
+  // preserva o tópico registrado no cronômetro
+  const antigas = db.sessoes.filter(s=> s.data===d && s.materia===m);
+  const topico = (antigas.find(s=> s.topico) || {}).topico || "";
   db.sessoes=db.sessoes.filter(s=>!(s.data===d&&s.materia===m));
-  if(alvo>0) db.sessoes.push({data:d,materia:m,minutos:alvo,quando:new Date().toISOString()});
+  if(alvo>0) db.sessoes.push({data:d,materia:m,minutos:alvo,topico,quando:new Date().toISOString()});
   salvar(); renderRegistro(); atualizarTudo();
 }
 function apagarSessao(i){ db.sessoes.splice(i,1); salvar(); renderRegistro(); atualizarTudo(); toast("Sessão removida", "info"); }
@@ -1305,6 +1317,7 @@ function metaDe(nome){
   return { questoes: (m && Number(m.questoes)) || 0, peso: (m && Number(m.peso)) || 1 };
 }
 function definirMeta(nome, campo, valor){
+  if(!db.metaDisciplina) db.metaDisciplina = {};
   db.metaDisciplina = db.metaDisciplina || {};
   db.metaDisciplina[nome] = db.metaDisciplina[nome] || {questoes:0, peso:1};
   db.metaDisciplina[nome][campo] = Math.max(0, Number(valor) || 0);
@@ -1332,7 +1345,7 @@ function renderPrioridades(){
     const cor=s.dif>=0.6?"#E86A6A":s.dif>=0.3?"#F5D06B":"#63BE7B";
     return `<div class="prio"><span class="bolinha" style="background:${cor}"></span>
       <span class="nome">${i+1}. ${tituloTopico(s.assunto)}<br><span style="color:#6B7280;font-size:10.5px">${s.materia} · ${s.acertos}/${s.total}</span></span>
-      <span class="val" style="color:${cor}">${Math.round(s.dif*100)}%</span></div>`;
+      <span class="val" style="color:${cor}">${Math.round(s.dif*100)}%<small style="display:block;font-size:9px;font-weight:600;opacity:.75">erro</small></span></div>`;
   }).join(""):`<div class="mini">Nenhum assunto com 5 questões ainda.</div>`;
   const porM={};
   db.questoes.forEach(q=>{ if(!porM[q.materia]) porM[q.materia]={t:0,a:0}; porM[q.materia].t+=q.total; porM[q.materia].a+=q.acertos; });
@@ -1753,6 +1766,9 @@ function extrairProva(){
 }
 
 /* ============================================================ PLANOS */
+function plural(n, singular, plural){
+  return n + " " + (n === 1 ? singular : plural);
+}
 function uid(){ return "p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
 function nomeEscolhido(){
   const el = document.getElementById("p-nome");
@@ -3327,7 +3343,7 @@ function normalizarCiclo(ciclo, alvo){
     let arr = (ciclo[d]||[]).map(b=>({
       materia:b.materia||"",
       topico:b.topico||"",
-      horas:Math.min(1.5, Math.max(1, +(b.horas||1)))
+      horas:Math.min(2, Math.max(0.5, Math.round(+((b.horas||1)*2))/2))
     })).filter(b=>b.materia);
     let usado = arr.reduce((a,b)=>a+b.horas,0);
     while(usado > cap[d] + 0.01 && arr.length){
@@ -3346,8 +3362,15 @@ function normalizarCiclo(ciclo, alvo){
   while(total() < alvo - 0.4 && guard < 100){
     const livre = d => cap[d] - out[d].reduce((a,b)=>a+b.horas,0);
     const d = [1,2,3,4,5,6].sort((a,b)=>livre(b)-livre(a))[0];
-    if(livre(d) < 0.9) break;
-    const h = Math.min(1.5, Math.floor(livre(d)*2)/2);
+    if(livre(d) < 0.45) break;
+    // engrossa um bloco existente (até 2 h) antes de criar bloco curto
+    const crescer = (out[d]||[]).find(b=> b.horas < 2.0);
+    if(crescer && livre(d) >= 0.5){
+      crescer.horas = +(crescer.horas + 0.5).toFixed(1);
+      giro++; guard++;
+      continue;
+    }
+    const h = Math.max(0.5, Math.min(1.5, Math.floor(livre(d)*2)/2));
     // não repetir a mesma matéria no mesmo dia enquanto houver alternativa
     const jaNoDia = new Set(out[d].map(b=>b.materia));
     let candidatas = disc.filter(x=> !jaNoDia.has(x.nome));
@@ -3454,7 +3477,7 @@ function calcularProximaAcao(){
 
   const rev = revisoesPendentes();
   if(rev.length)
-    return {ico:"🔁", t:`${rev.length} revisão(ões) esperando`,
+    return {ico:"🔁", t: plural(rev.length, "revisão esperando", "revisões esperando"),
       d:"Revisar é o que fixa o conteúdo. Leva poucos minutos.",
       b:"Revisar agora", f:()=>{ tab("plano"); subTab("hoje"); }};
 
@@ -3546,7 +3569,7 @@ function renderRevisoes(){
   const pend = revisoesPendentes();
   if(!pend.length){
     box.innerHTML = `<div class="mini">Nada para revisar hoje.` +
-      ((db.revisoes||[]).length ? ` ${db.revisoes.length} revisão(ões) agendada(s).` : "") + `</div>`;
+      ((db.revisoes||[]).length ? ` ${plural(db.revisoes.length, "revisão agendada", "revisões agendadas")}.` : "") + `</div>`;
     return;
   }
   box.innerHTML = pend.slice(0,8).map(r=>`
@@ -3672,7 +3695,7 @@ function gerarAvisos(){
 
   const pendRev = revisoesPendentes();
   if(pendRev.length)
-    out.push({n:"warn", ico:"🔁", t:`${pendRev.length} revisão(ões) para hoje`,
+    out.push({n:"warn", ico:"🔁", t: plural(pendRev.length, "revisão para hoje", "revisões para hoje"),
       d:pendRev.slice(0,3).map(r=>r.topico || r.materia).join(" · "), b:"Revisar", acao:"hoje"});
 
   ranking().filter(s=> s.dif >= 0.6).slice(0,2).forEach(s=>{
@@ -4282,8 +4305,14 @@ function wzPassoDificuldade(c){
     ${disc.map((d,i)=>`
       <div class="slider">
         <span class="nm">${d.nome}<small>${d.topicos.length} tópicos${totalQ[d.nome]?(" · "+totalQ[d.nome]+" questões feitas"):""}</small></span>
-        <input type="range" min="0" max="5" step="1" value="${dificuldadeDe(d.nome)}"
-               oninput="wzMudarDificuldade('${d.nome.replace(/'/g,"\\'")}', this.value)">
+        <button class="bt mini-menos" aria-label="Diminuir dificuldade de ${d.nome}"
+                onclick="ajustarDificuldade('${d.nome.replace(/'/g,"\\'")}', -1)">−</button>
+        <input type="range" id="wz-range-${i}" min="0" max="5" step="1" value="${dificuldadeDe(d.nome)}"
+               aria-label="Dificuldade de ${d.nome}"
+               oninput="wzMudarDificuldade('${d.nome.replace(/'/g,"\\'")}', this.value)"
+               onchange="wzMudarDificuldade('${d.nome.replace(/'/g,"\\'")}', this.value)">
+        <button class="bt mini-mais" aria-label="Aumentar dificuldade de ${d.nome}"
+                onclick="ajustarDificuldade('${d.nome.replace(/'/g,"\\'")}', 1)">+</button>
         <span class="val" id="wz-nivel-${i}">${dificuldadeDe(d.nome)}</span>
       </div>`).join("")}
     <div class="mini" style="margin-top:10px">
@@ -4294,12 +4323,21 @@ function wzPassoDificuldade(c){
     <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="wzIr(1)">Voltar</button>`);
 }
 function wzMudarDificuldade(nome, valor){
+  if(!db.dificuldade) db.dificuldade = {};
   db.dificuldade[nome] = Number(valor);
   salvar();
   const disc = disciplinas();
   const i = disc.findIndex(d=> d.nome === nome);
   const el = document.getElementById("wz-nivel-" + i);
   if(el) el.textContent = valor;
+  const range = document.getElementById("wz-range-" + i);
+  if(range && String(range.value) !== String(valor)) range.value = String(valor);
+}
+/* alternativa ao arrasto: botões - e + (funciona em qualquer toque) */
+function ajustarDificuldade(nome, delta){
+  const atual = dificuldadeDe(nome);
+  const novo = Math.max(0, Math.min(5, atual + delta));
+  wzMudarDificuldade(nome, novo);
 }
 
 /* ---------- passo 3: questões da prova e peso ---------- */
