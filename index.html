@@ -129,6 +129,68 @@
   .aviso-item .corpo span{font-size:11px;color:#5B6B80;line-height:1.4}
   .aviso-item .ir{border:0;background:var(--azul2);color:#fff;border-radius:99px;
                   padding:7px 12px;font-size:11px;font-weight:700;align-self:center}
+  .menu-item{display:flex;align-items:center;gap:12px;padding:14px 12px;border-radius:14px;
+             background:var(--cinza);margin-bottom:8px;border:1px solid var(--borda);width:100%;text-align:left}
+  .menu-item .emoji{font-size:20px;width:28px;text-align:center}
+  .menu-item .rot{flex:1}
+  .menu-item .rot b{display:block;font-size:13px;color:var(--azul)}
+  .menu-item .rot span{font-size:11px;color:#6B7280}
+  .resumo-plano{background:#EEF9FB;border:1px solid #CFEAF0;border-radius:12px;padding:11px;margin-bottom:10px}
+  .resumo-plano b{color:#0A2240;font-size:12.5px}
+  .resumo-plano div{font-size:11.5px;color:#3D5A73;margin-top:3px}
+  .wizard{position:fixed;inset:0;background:#F2F7FB;z-index:95;display:flex;flex-direction:column}
+  .wz-topo{background:linear-gradient(135deg,#0A2240,#14325C);color:#fff;padding:14px 16px 12px}
+  .wz-topo .linha-topo{display:flex;align-items:center;justify-content:space-between}
+  .wz-topo h3{margin:0;font-size:15px}
+  .wz-topo button{border:0;background:rgba(255,255,255,.16);color:#fff;width:32px;height:32px;border-radius:50%;font-size:14px}
+  .wz-barra{height:5px;background:rgba(255,255,255,.22);border-radius:99px;margin-top:11px;overflow:hidden}
+  .wz-barra i{display:block;height:100%;background:linear-gradient(90deg,#30A6B5,#C2A24E);width:0;transition:width .3s}
+  .wz-corpo{flex:1;overflow:auto;padding:16px 14px 24px}
+  .wz-corpo h4{margin:0 0 6px;font-size:17px;color:#0A2240;line-height:1.25}
+  .wz-corpo p.sub{margin:0 0 16px;font-size:12.5px;color:#5B6B80;line-height:1.45}
+  .wz-op{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;
+         border:1px solid var(--borda);border-radius:14px;padding:15px 13px;margin-bottom:9px;
+         box-shadow:0 2px 8px rgba(10,34,64,.05)}
+  .wz-op .em{font-size:21px}
+  .wz-op .tx{flex:1}
+  .wz-op .tx b{display:block;font-size:13.5px;color:#0A2240}
+  .wz-op .tx span{font-size:11.5px;color:#6B7280}
+  .wz-rodape{padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--borda)}
+  .wz-campo{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:13px;margin-bottom:10px}
+  .slider{display:flex;align-items:center;gap:10px;margin:11px 0}
+  .slider .nm{flex:1;font-size:12.5px;color:#12233A;line-height:1.25}
+  .slider .nm small{display:block;color:#8A9AAF;font-size:10px}
+  .slider input[type=range]{-webkit-appearance:none;appearance:none;width:118px;height:9px;
+    border-radius:99px;background:linear-gradient(90deg,#3FA86A,#8ED08A,#FFE27A,#F5A24B,#E2543F);
+    border:0;padding:0;outline:none}
+  .slider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;
+    border-radius:50%;background:#fff;border:3px solid #0A2240;box-shadow:0 2px 6px rgba(10,34,64,.28)}
+  .slider .val{width:24px;text-align:center;font-weight:800;font-size:13px;color:#0A2240}
+  .rev{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #EFF3F8}
+  .rev:last-child{border-bottom:0}
+  .rev .t{flex:1;font-size:12.5px;line-height:1.3}
+  .rev .t small{display:block;color:#8A9AAF;font-size:10.5px}
+  .rev button{border:0;border-radius:99px;padding:7px 11px;font-size:11px;font-weight:700}
+  .rev .ok{background:linear-gradient(135deg,#2E8B57,#1F6B3A);color:#fff}
+  .rev .no{background:#FDECEC;color:#9C2727}
+  .heat{display:flex;gap:3px;flex-wrap:wrap;margin-top:8px}
+  .heat i{width:14px;height:14px;border-radius:4px;background:#E9EFF6;display:block}
+  .streak{display:flex;align-items:center;gap:8px;font-size:12px;color:#5B6B80;margin-top:8px}
+  .streak b{color:#C2A24E;font-size:15px}
+  /* retorno visual de toque em tudo que é clicável */
+  .btn, .wz-op, .menu-item, .chip, .bt, .dias button, .subnav button, nav button, .sino,
+  .rev button, .ir, .sheet-topo button, .aviso-item .ir{transition:transform .08s ease, filter .08s ease}
+  .btn:active, .wz-op:active, .menu-item:active, .chip:active, .bt:active, .dias button:active,
+  .subnav button:active, nav button:active, .sino:active, .rev button:active, .ir:active,
+  .sheet-topo button:active, .tocado{transform:scale(.96); filter:brightness(.93)}
+  .btn:disabled{opacity:.55; filter:grayscale(.35)}
+  .carregando{position:relative; color:transparent !important}
+  .carregando::after{content:"";position:absolute;left:50%;top:50%;width:16px;height:16px;
+    margin:-8px 0 0 -8px;border-radius:50%;border:2px solid rgba(255,255,255,.45);
+    border-top-color:#fff;animation:gira .7s linear infinite}
+  @keyframes gira{to{transform:rotate(360deg)}}
+  /* campos com foco evidente */
+  input:focus, select:focus, textarea:focus{outline:2px solid var(--teal);outline-offset:1px}
   .toasts{position:fixed;left:0;right:0;bottom:88px;display:flex;flex-direction:column;
           align-items:center;gap:7px;z-index:80;pointer-events:none;padding:0 12px}
   .toast{background:#0A2240;color:#fff;padding:11px 17px;border-radius:99px;font-size:12.5px;
@@ -162,6 +224,123 @@
   table{width:100%;border-collapse:collapse;font-size:11.5px}
   td,th{padding:4px 2px;border-bottom:1px solid #E6EAF0;text-align:left}
   th{font-size:10px;color:#6B7280;text-transform:uppercase}
+
+  /* ==========================================================
+     DESIGN SYSTEM v2
+     Base: Material 3 (superfícies), Apple HIG (toque 44pt),
+     WCAG 2.1 (contraste 4.5:1) e zonas do polegar (Hoober).
+     ========================================================== */
+  :root{
+    /* espaçamento — escala de 4 */
+    --e1:4px; --e2:8px; --e3:12px; --e4:16px; --e6:24px;
+    /* raios */
+    --r-s:10px; --r-m:14px; --r-l:20px; --r-pill:99px;
+    /* superfícies (Material 3) */
+    --bg:#F4F7FB; --surface:#FFFFFF; --surface-2:#EDF2F8; --line:#DFE8F2;
+    /* tinta — contraste sobre branco */
+    --ink:#0F2137;        /* 14:1 */
+    --ink-2:#4C5F75;      /* 7:1  */
+    --ink-3:#5E7085;      /* 5,1:1 */
+    /* marca */
+    --brand:#0A2240; --brand-2:#14325C;
+    --accent:#17798A;     /* teal escurecido: 4,8:1 sobre branco */
+    --accent-2:#30A6B5;
+    --gold:#8A6D2C;       /* 4,9:1 sobre branco */
+    --sombra:0 1px 2px rgba(15,33,55,.06), 0 4px 14px rgba(15,33,55,.06);
+  }
+  html{font-size:16px}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-size:14px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* ---------- tipografia ---------- */
+  h1,h2,h3,h4{color:var(--ink); letter-spacing:-.01em}
+  .card h2{
+    font-size:11.5px; font-weight:800; letter-spacing:.09em;
+    color:var(--ink-3); text-transform:uppercase; margin:0 0 var(--e3);
+  }
+  .mini{font-size:12.5px; line-height:1.5; color:var(--ink-2)}
+  .num{font-size:24px; font-weight:800; color:var(--brand)}
+  .kpi{font-size:12.5px; color:var(--ink-2)}
+  /* ---------- superfícies ---------- */
+  .card{
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--r-m); padding:var(--e4); margin-bottom:var(--e3);
+    box-shadow:var(--sombra);
+  }
+  /* ---------- alvos de toque (>=44px) ---------- */
+  .btn{
+    min-height:44px; padding:0 var(--e4); border-radius:var(--r-pill);
+    font-size:13.5px; font-weight:700; letter-spacing:.01em;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .btn.mini{min-height:38px; padding:0 var(--e3); font-size:12.5px}
+  .btn.sec{background:var(--surface); color:var(--brand); border:1px solid var(--line)}
+  .btn.sec:active{background:var(--surface-2)}
+  .chip{min-height:38px; display:inline-flex; align-items:center; font-size:12.5px}
+  .dias button{min-height:40px; min-width:44px; font-size:12px; border-radius:var(--r-s)}
+  .subnav button{min-height:38px; font-size:12px}
+  .bt{width:44px; height:44px; border-radius:50%; font-size:16px}
+  .rev button{min-height:36px; padding:0 var(--e3)}
+  .sheet-topo button{width:40px; height:40px}
+  /* ---------- formulários ---------- */
+  input,select,textarea{
+    min-height:44px; font-size:16px; /* 16px evita zoom automático no iOS */
+    border-radius:var(--r-s); border:1px solid var(--line);
+    background:var(--surface); color:var(--ink); padding:10px 12px;
+  }
+  input[type=number]{min-width:72px}
+  textarea{min-height:120px; line-height:1.5}
+  .linha{gap:var(--e3); margin:var(--e2) 0}
+  .linha label{font-size:13px; color:var(--ink-2)}
+  /* ---------- navegação (zona do polegar) ---------- */
+  nav{height:64px; padding-bottom:env(safe-area-inset-bottom)}
+  nav button{font-size:10px; font-weight:700; gap:2px; letter-spacing:.01em}
+  nav button span{font-size:19px}
+  nav button.on span{width:36px; height:36px; line-height:36px}
+  /* ---------- cabeçalho ---------- */
+  header{padding:10px 14px 8px}
+  .marca h1{font-size:15px; font-weight:800}
+  .marca p{font-size:11px}
+  /* ---------- listas ---------- */
+  .mat{padding:10px 0; min-height:52px}
+  .mat .nome{font-size:13.5px}
+  .mat .tempo{font-size:13px}
+  .rev{padding:11px 0; min-height:52px}
+  .rev .t{font-size:13px}
+  .prio{padding:9px 0; min-height:44px}
+  .prio .nome{font-size:12.5px}
+  .saldo{padding:9px 0; min-height:40px}
+  /* ---------- cartões de ação ---------- */
+  .wz-op{min-height:64px; padding:var(--e3) var(--e4); border-radius:var(--r-m)}
+  .wz-op .tx b{font-size:14px}
+  .wz-op .tx span{font-size:12px; line-height:1.4}
+  .menu-item{min-height:60px; padding:var(--e3) var(--e4)}
+  .menu-item .rot b{font-size:13.5px}
+  .menu-item .rot span{font-size:12px}
+  /* ---------- feedback ---------- */
+  .status{font-size:12.5px; line-height:1.45; padding:11px 13px}
+  .aviso{font-size:12px; line-height:1.5; padding:11px 13px}
+  .toast{font-size:13px; padding:12px 18px}
+  .tag{font-size:10.5px}
+  /* ---------- gráficos e números ---------- */
+  canvas{max-width:100%}
+  .anel{width:116px; height:116px}
+  .anel-int{width:92px; height:92px}
+  .anel-int b{font-size:22px}
+  .anel-int span{font-size:10px}
+  .heat i{width:16px; height:16px; border-radius:5px}
+  .streak{font-size:12.5px}
+  /* ---------- acessibilidade ---------- */
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important; transition-duration:.001ms !important}
+    .btn:active,.wz-op:active,.chip:active,nav button:active{transform:none}
+  }
+  @media (min-width:520px){
+    main{max-width:560px; margin:0 auto}
+    nav{max-width:560px; left:50%; transform:translateX(-50%); border-radius:16px 16px 0 0}
+  }
 </style>
 </head>
 <body>
@@ -173,17 +352,73 @@
       <p id="cabecalho">—</p>
     </div>
   </div>
-  <button class="sino" onclick="abrirAvisos()" aria-label="Avisos">
+  <button class="sino" onclick="abrirAvisos()" aria-label="Avisos não lidos">
     🔔<i class="badge" id="sinoBadge" style="display:none">0</i>
   </button>
   <div class="faixa-ouro"></div>
 </header>
 
+<div id="assistente" class="wizard oculto">
+  <div class="wz-topo">
+    <div class="linha-topo">
+      <h3 id="wz-titulo">Montar meu plano</h3>
+      <button onclick="fecharAssistente()" aria-label="Fechar assistente">✕</button>
+    </div>
+    <div class="wz-barra"><i id="wz-progresso"></i></div>
+  </div>
+  <div class="wz-corpo" id="wz-corpo"></div>
+  <div class="wz-rodape" id="wz-rodape"></div>
+</div>
+
+<div id="painelMenu" class="overlay oculto" onclick="fecharMenu(event)">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-topo">
+      <h3>O que você quer fazer?</h3>
+      <button onclick="fecharMenu()" aria-label="Fechar menu">✕</button>
+    </div>
+    <button class="menu-item" onclick="menuAcao('buscar')">
+      <span class="emoji">🔍</span>
+      <span class="rot"><b>Não tenho o edital</b><span>buscar o concurso na internet</span></span>
+    </button>
+    <button class="menu-item" onclick="menuAcao('anexar')">
+      <span class="emoji">📄</span>
+      <span class="rot"><b>Já tenho o edital</b><span>anexar o PDF ou colar o texto</span></span>
+    </button>
+    <button class="menu-item" onclick="menuAcao('hoje')">
+      <span class="emoji">🎯</span>
+      <span class="rot"><b>Ver o que estudar hoje</b><span>objetivos do dia</span></span>
+    </button>
+    <button class="menu-item" onclick="menuAcao('rotina')">
+      <span class="emoji">⏰</span>
+      <span class="rot"><b>Ajustar minha rotina</b><span>trabalho, faculdade, horas livres</span></span>
+    </button>
+    <button class="menu-item" onclick="menuAcao('gerar')">
+      <span class="emoji">⚡</span>
+      <span class="rot"><b>Gerar o plano</b><span>com o edital que já está carregado</span></span>
+    </button>
+    <button class="menu-item" onclick="menuAcao('avancado')">
+      <span class="emoji">🔧</span>
+      <span class="rot"><b>Avançado</b><span>pesos, edital, atualização, dados</span></span>
+    </button>
+    <div class="mini" style="text-align:center;margin-top:8px">Dica: o app lembra do seu edital e da sua rotina.</div>
+  </div>
+</div>
+
+<div id="painelConfirma" class="overlay oculto" onclick="fecharConfirma(event)">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-topo">
+      <h3>Vou montar assim</h3>
+      <button onclick="fecharConfirma()" aria-label="Fechar confirmação">✕</button>
+    </div>
+    <div id="confirmaConteudo"></div>
+  </div>
+</div>
+
 <div id="painelAvisos" class="overlay oculto" onclick="fecharAvisos(event)">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="sheet-topo">
       <h3>Avisos de hoje</h3>
-      <button onclick="fecharAvisos()">✕</button>
+      <button onclick="fecharAvisos()" aria-label="Fechar avisos">✕</button>
     </div>
     <div id="listaAvisos"></div>
     <button class="btn sec" id="maisAvisos" style="display:none;width:100%;margin-top:6px"
@@ -196,10 +431,20 @@
 <main>
   <!-- PAINEL -->
   <section id="tab-painel">
+    <div class="card" id="cardProxima">
+      <h2>O que fazer agora</h2>
+      <div id="proximaAcao" class="mini">—</div>
+    </div>
+
     <div class="card">
       <h2>Plano ativo</h2>
       <div class="chips" id="chipsPlanos"></div>
       <div class="mini" id="planoInfo">Nenhum plano ainda.</div>
+      <button class="btn principal" style="width:100%;margin-top:10px" onclick="abrirAssistente()">
+        ⚡ Montar meu plano</button>
+      <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="abrirMenu()">
+        acesso rápido</button>
+      <div class="mini" id="basePlano" style="text-align:center"></div>
     </div>
     <div class="card">
       <h2>Hoje</h2>
@@ -212,9 +457,16 @@
         <div><div class="num" id="n-questoes">0</div><div class="mini" style="margin:0">baterias</div></div>
       </div>
     </div>
-    <div class="card"><h2>Horas por matéria</h2><canvas id="cvHoras" height="180"></canvas><div class="mini" id="cvHorasMsg"></div></div>
-    <div class="card"><h2>Semana a semana</h2><canvas id="cvSemana" height="160"></canvas><div class="mini">Barras: horas feitas. Linha: meta do período.</div></div>
-    <div class="card"><h2>Onde erra mais</h2><canvas id="cvErros" height="150"></canvas><div class="mini" id="cvErrosMsg"></div></div>
+    <div class="card"><h2>Constância</h2><div id="constancia"></div></div>
+
+    <button class="btn sec" style="width:100%" onclick="alternarStats()" id="btnStats">
+      📊 Ver estatísticas</button>
+
+    <div id="blocoStats" class="oculto">
+      <div class="card" style="margin-top:10px"><h2>Horas por matéria</h2><canvas id="cvHoras" height="180"></canvas><div class="mini" id="cvHorasMsg"></div></div>
+      <div class="card"><h2>Semana a semana</h2><canvas id="cvSemana" height="160"></canvas><div class="mini">Barras: horas feitas. Linha: meta do período.</div></div>
+      <div class="card"><h2>Onde erra mais</h2><canvas id="cvErros" height="150"></canvas><div class="mini" id="cvErrosMsg"></div></div>
+    </div>
   </section>
 
   <!-- ESTUDO -->
@@ -256,6 +508,8 @@
     <div class="card"><h2>Estude primeiro</h2>
       <div class="aviso">Peso da matéria × dificuldade medida. Só entra assunto com 5 questões ou mais.</div>
       <div id="ranking"></div></div>
+    <div class="card"><h2>Caderno de erros</h2><div id="cadernoErros"></div>
+      <div class="mini">Assuntos com menos de 60% de acerto em 3+ questões.</div></div>
     <div class="card"><h2>Por matéria</h2><div id="porMateria"></div></div>
   </section>
 
@@ -265,11 +519,16 @@
       <button class="on" data-sub="hoje" onclick="subTab('hoje')">Hoje</button>
       <button data-sub="semana" onclick="subTab('semana')">Semana</button>
       <button data-sub="rotina" onclick="subTab('rotina')">Rotina</button>
-      <button data-sub="edital" onclick="subTab('edital')">Edital + IA</button>
+      <button data-sub="edital" onclick="subTab('edital')">Edital</button>
     </div>
 
     <!-- HOJE -->
     <div id="sub-hoje">
+      <div class="card">
+        <h2>Revisões de hoje</h2>
+        <div id="revisoesHoje" class="mini">—</div>
+      </div>
+
       <div class="card">
         <h2>Objetivos de hoje</h2>
         <div id="statusPlano"></div>
@@ -453,7 +712,8 @@ const ROTINA_PADRAO = {
 
 let db = { sessoes:[], questoes:[], edital:{texto:"",disciplinas:[]},
            pesos:{}, planos:[], ativoId:null, apiKey:"", apiModel:"gemini-flash-lite-latest",
-           avisos:[], planoInicio:null, cacheBuscas:{}, webStatus:"desconhecido",
+           avisos:[], planoInicio:null, cacheBuscas:{}, webStatus:"desconhecido", dificuldade:{},
+           metaDisciplina:{}, revisoes:[], versao:"v29",
            rotina: Object.assign({},ROTINA_PADRAO) };
 
 function carregar(){
@@ -464,10 +724,23 @@ function carregar(){
   db.avisos = db.avisos || [];
   db.cacheBuscas = db.cacheBuscas || {};
   db.webStatus = db.webStatus || "desconhecido";
+  db.dificuldade = db.dificuldade || {};
+  db.metaDisciplina = db.metaDisciplina || {};
+  db.revisoes = db.revisoes || [];
   if(!db.pesos||!Object.keys(db.pesos).length) resetarPesos();
   if(db.planos.length && !db.ativoId) db.ativoId=db.planos[0].id;
 }
-function salvar(){ try{ localStorage.setItem(CHAVE,JSON.stringify(db)); }catch(e){} }
+let avisoArmazenamento = false;
+function salvar(){
+  try{
+    localStorage.setItem(CHAVE, JSON.stringify(db));
+  }catch(e){
+    if(!avisoArmazenamento){
+      avisoArmazenamento = true;
+      try{ toast("Armazenamento cheio — exporte seus dados e apague avisos antigos", "err"); }catch(x){}
+    }
+  }
+}
 function resetarPesos(){ db.pesos={}; disciplinas().forEach(d=>db.pesos[d.nome]=Math.max(1,d.topicos.length)); }
 function disciplinas(){
   if(db.edital&&db.edital.disciplinas&&db.edital.disciplinas.length) return db.edital.disciplinas;
@@ -648,7 +921,7 @@ function lancar(d,m,v){
   if(alvo>0) db.sessoes.push({data:d,materia:m,minutos:alvo,quando:new Date().toISOString()});
   salvar(); renderRegistro(); atualizarTudo();
 }
-function apagarSessao(i){ db.sessoes.splice(i,1); salvar(); renderRegistro(); atualizarTudo(); }
+function apagarSessao(i){ db.sessoes.splice(i,1); salvar(); renderRegistro(); atualizarTudo(); toast("Sessão removida", "info"); }
 
 /* ============================================================ QUESTÕES */
 function popularSelects(){
@@ -684,7 +957,7 @@ function renderHistorico(){
       <span style="color:#6B7280">${q.data} · ${q.acertos}/${q.total}</span></span><button onclick="apagarQuestao(${idx})">✕</button></div>`;
   }).join("");
 }
-function apagarQuestao(i){ db.questoes.splice(i,1); salvar(); renderHistorico(); renderPrioridades(); desenharTudo(); }
+function apagarQuestao(i){ db.questoes.splice(i,1); salvar(); renderHistorico(); renderPrioridades(); renderCadernoErros(); desenharTudo(); toast("Bateria removida", "info"); }
 
 /* ============================================================ PRIORIDADE */
 function statsPorAssunto(){
@@ -693,6 +966,32 @@ function statsPorAssunto(){
     if(!m[k]) m[k]={materia:q.materia,assunto:q.assunto,total:0,acertos:0};
     m[k].total+=q.total; m[k].acertos+=q.acertos; });
   return Object.values(m);
+}
+/* dificuldade declarada pelo usuário: 0 = fácil, 3 = neutro, 5 = difícil */
+function dificuldadeDe(nome){
+  const v = db.dificuldade ? db.dificuldade[nome] : undefined;
+  return (v === undefined || v === null) ? 3 : Number(v);
+}
+/* quantas questões da prova e qual o peso que o edital dá à disciplina */
+function metaDe(nome){
+  const m = db.metaDisciplina ? db.metaDisciplina[nome] : null;
+  return { questoes: (m && Number(m.questoes)) || 0, peso: (m && Number(m.peso)) || 1 };
+}
+function definirMeta(nome, campo, valor){
+  db.metaDisciplina = db.metaDisciplina || {};
+  db.metaDisciplina[nome] = db.metaDisciplina[nome] || {questoes:0, peso:1};
+  db.metaDisciplina[nome][campo] = Math.max(0, Number(valor) || 0);
+  if(campo === "peso" && db.metaDisciplina[nome].peso < 1) db.metaDisciplina[nome].peso = 1;
+  salvar();
+}
+/* peso usado no plano: questões da prova × peso do edital; sem isso, nº de submatérias */
+function pesoBase(nome){
+  const m = metaDe(nome);
+  if(m.questoes > 0) return m.questoes * m.peso;
+  return db.pesos[nome] || 1;
+}
+function fatorDificuldade(nome){
+  return 0.6 + (dificuldadeDe(nome) / 5) * 0.8;   // 0,6x (fácil) a 1,4x (difícil)
 }
 function pesoMateria(nome){ const d=disciplinas(), s=d.reduce((a,x)=>a+(db.pesos[x.nome]||1),0)||1; return (db.pesos[nome]||1)/s; }
 function ranking(){
@@ -785,8 +1084,10 @@ function desenharColunas(cv,itens,meta){
   }
   ctx.textAlign="left";
 }
-function desenharTudo(){
+function desenharTudo(forcar){
   if(document.getElementById("tab-painel").classList.contains("oculto")) return;
+  const bloco = document.getElementById("blocoStats");
+  if(bloco && bloco.classList.contains("oculto") && !forcar) return;
   const porM={};
   db.sessoes.forEach(s=>{ porM[s.materia]=(porM[s.materia]||0)+s.minutos/60; });
   desenharBarras(document.getElementById("cvHoras"),
@@ -1059,7 +1360,11 @@ function renderChips(){
     ? `${p.nome} · ${p.inicio.split("-").reverse().join("/")} a ${p.fim.split("-").reverse().join("/")} · ${p.dias} dias · ${p.horasSemana.toString().replace(".",",")} h/sem · ${p.origem}`
     : "Nenhum plano ativo.";
 }
-function ativarPlano(id){ db.ativoId=id; salvar(); renderChips(); renderSemana(); desenharTudo(); }
+function ativarPlano(id){
+  db.ativoId=id; salvar(); renderChips(); renderChips2(); renderSemana(); renderHoje(); renderConstancia(); desenharTudo();
+  const p = planoAtivo();
+  toast("Plano ativo: " + (p ? p.nome : "—"), "ok");
+}
 function renderListaPlanos(){
   const box=document.getElementById("listaPlanos");
   if(!db.planos.length){ box.textContent="Nenhum plano ainda."; return; }
@@ -1073,12 +1378,17 @@ function apagarPlano(id){
   if(!confirm("Apagar este plano?")) return;
   db.planos=db.planos.filter(p=>p.id!==id);
   if(db.ativoId===id) db.ativoId=db.planos[0]?db.planos[0].id:null;
-  salvar(); renderListaPlanos(); renderChips(); renderSemana(); desenharTudo();
+  salvar(); renderListaPlanos(); renderChips(); renderChips2(); renderSemana(); desenharTudo();
+  toast("Plano apagado", "info");
 }
 
 function montarCiclo(inicio, usarProgresso){
   const disc=disciplinas();
-  const pesos = usarProgresso ? pesosAjustados() : db.pesos;
+  const base = usarProgresso ? pesosAjustados() : db.pesos;
+  const pesos = {};
+  disc.forEach(d=>{
+    pesos[d.nome] = pesoBase(d.nome) * fatorDificuldade(d.nome);
+  });
   const somaPesos=disc.reduce((a,d)=>a+(pesos[d.nome]||1),0)||1;
   const disp=disponibilidade(), diasEstudo=[1,2,3,4,5,6].filter(d=>disp[d]>0);
   const ciclo={}; [1,2,3,4,5,6].forEach(d=>ciclo[d]=[]);
@@ -1176,7 +1486,11 @@ function renderPesos(){
       <input type="number" min="1" value="${db.pesos[d.nome]||1}" onchange="mudarPeso('${d.nome.replace(/'/g,"\\'")}',this.value)"></div>`).join("")+
     `<div class="mini">Peso = nº de submatérias reconhecidas.</div>`;
 }
-function mudarPeso(n,v){ db.pesos[n]=Math.max(1,parseInt(v||"1",10)); salvar(); renderPesos(); }
+function mudarPeso(n,v){
+  db.pesos[n]=Math.max(1,parseInt(v||"1",10));
+  salvar(); renderPesos();
+  toast("Peso de " + n + " agora é " + db.pesos[n], "ok");
+}
 
 /* ============================================================ PROGRESSO E ATUALIZAÇÃO */
 function horasPorMateria(){
@@ -1448,7 +1762,13 @@ function gravarCache(termo, lista){
   salvar();
 }
 
+let _buscando = false;
 async function buscarConcursos(verificar){
+  if(_buscando){ toast("Já estou buscando…", "info"); return; }
+  _buscando = true;
+  try{ return await _buscarConcursos(verificar); } finally { _buscando = false; }
+}
+async function _buscarConcursos(verificar){
   const msg = document.getElementById("busca-msg");
   const box = document.getElementById("busca-resultado");
   const termo = (document.getElementById("busca-termo").value || "").trim();
@@ -1519,7 +1839,13 @@ Regras:
   }finally{ clearInterval(cron); }
 }
 
+let _detalhando = {};
 async function escolherConcurso(i, verificar){
+  if(_detalhando[i]){ toast("Já estou carregando este concurso…", "info"); return; }
+  _detalhando[i] = true;
+  try{ return await _escolherConcurso(i, verificar); } finally { delete _detalhando[i]; }
+}
+async function _escolherConcurso(i, verificar){
   const c = listaConcursos[i];
   if(!c) return;
   if(c.detalhes && !verificar){ concursoEscolhido = c; usarConcurso(); return; }
@@ -1714,7 +2040,13 @@ function separarPorCargo(){
 }
 
 /* ---------- 1 chamada por cargo, só com o bloco dele ---------- */
+let _processando = {};
 async function processarCargo(i){
+  if(_processando[i]){ toast("Já estou lendo este cargo…", "info"); return; }
+  _processando[i] = true;
+  try{ return await _processarCargo(i); } finally { delete _processando[i]; }
+}
+async function _processarCargo(i){
   const c = cargosEncontrados[i];
   if(!c) return;
   const texto = (document.getElementById("edital").value || "").trim();
@@ -1738,8 +2070,11 @@ async function processarCargo(i){
     const prompt = `Abaixo está o conteúdo programático de UM cargo de um concurso público brasileiro.
 Liste todas as disciplinas e, para cada uma, os tópicos.
 Responda APENAS com JSON:
-{"disciplinas":[{"nome":"","topicos":["",""]}]}
-Regras: use os nomes exatos das disciplinas; liste TODOS os tópicos numerados; não invente.
+{"disciplinas":[{"nome":"","topicos":["",""],"questoes":0,"peso":1}]}
+Regras:
+- nomes exatos das disciplinas; TODOS os tópicos numerados; não invente;
+- "questoes" = quantas questões desta disciplina caem na prova (0 se o edital não informar);
+- "peso" = peso/multiplicador que o edital dá à disciplina (1 se não houver).
 
 TEXTO:
 ${bloco}`;
@@ -1747,6 +2082,12 @@ ${bloco}`;
       const r = await chamarGeminiBusca(prompt, 8192, false);
       disc = (r.obj.disciplinas || []).filter(d=> d && d.nome && (d.topicos||[]).length)
         .map(d=>({ nome: limparTextoEdital(d.nome), topicos: (d.topicos||[]).map(limparTextoEdital) }));
+      (r.obj.disciplinas || []).forEach(d=>{
+        if(!d || !d.nome) return;
+        const nome = limparTextoEdital(d.nome);
+        if(Number(d.questoes) > 0) definirMeta(nome, "questoes", d.questoes);
+        if(Number(d.peso) > 0) definirMeta(nome, "peso", d.peso);
+      });
       if(!disc.length) disc = null;
     }catch(e){ erroIA = e.message; }
   }
@@ -1814,9 +2155,15 @@ function salvarChave(){
   salvar();
   document.getElementById("ia-msg").textContent=db.apiKey?"Chave salva neste aparelho.":"Chave vazia.";
 }
-function apagarChave(){ db.apiKey=""; salvar(); document.getElementById("apiKey").value=""; document.getElementById("ia-msg").textContent="Chave apagada."; }
+function apagarChave(){ db.apiKey=""; db.webStatus="desconhecido"; salvar(); document.getElementById("apiKey").value=""; document.getElementById("ia-msg").textContent="Chave apagada."; toast("Chave apagada do aparelho", "info"); }
 
+let _gerando = false;
 async function gerarComIA(){
+  if(_gerando){ toast("Já estou gerando o plano…", "info"); return; }
+  _gerando = true;
+  try{ return await _gerarComIA(); } finally { _gerando = false; }
+}
+async function _gerarComIA(){
   const msg=document.getElementById("ia-msg");
   if(!db.apiKey){ msg.textContent="Cole sua chave e salve primeiro."; return; }
   if(!db.edital.disciplinas.length){ msg.textContent="Leia o edital primeiro (passo 3)."; return; }
@@ -1842,14 +2189,27 @@ Regras:
 - Domingos e feriados: nenhum bloco.
 - Cada dia deve somar no máximo as horas livres informadas para aquele dia da semana.
 - Blocos de 1 a 1,5 h.
-- Distribua as disciplinas proporcionalmente ao peso e à dificuldade medida (quem erra mais recebe mais tempo).
+- Distribua as disciplinas considerando, nesta ordem de importância:
+  1) quantas QUESTÕES caem de cada matéria na prova (mais questões = mais tempo);
+  2) o PESO que o edital dá à matéria (peso 2 = o dobro do peso 1);
+  3) a dificuldade que o aluno DECLAROU (0=fácil, 5=difícil);
+  4) o desempenho medido (quem erra mais recebe mais tempo).
+  Se o edital não informar questões, use o número de submatérias como peso.
 - Use as submatérias fornecidas; não invente.
 - Nomeie o plano com o cargo e o prazo, em até 40 caracteres${nomeEscolhido()?`. Use EXATAMENTE este nome: "${nomeEscolhido()}"`:""}.
 - Formato exato:
 {"nome":"Plano IA 1","inicio":"${j.inicio}","fim":"${j.fim}","dias":${j.dias},
  "ciclo":{"1":[{"materia":"...","topico":"...","horas":1.5}],"2":[],"3":[],"4":[],"5":[],"6":[],"0":[]}}
 
-Disciplinas (peso e submatérias): ${JSON.stringify(disciplinas().map(d=>({nome:d.nome,peso:db.pesos[d.nome]||1,sub:d.topicos})))}
+Disciplinas (questões na prova, peso do edital, dificuldade declarada, questões já feitas e submatérias):
+${JSON.stringify(disciplinas().map(d=>({
+  nome:d.nome,
+  questoes_prova: metaDe(d.nome).questoes,
+  peso_edital: metaDe(d.nome).peso,
+  dificuldade: dificuldadeDe(d.nome),
+  questoes_feitas: (db.questoes.filter(q=>q.materia===d.nome).reduce((a,q)=>a+q.total,0)),
+  submatérias: d.topicos.length
+})))}
 Dificuldade medida (1 = erra tudo): ${JSON.stringify(statsPorAssunto().map(s=>({a:s.assunto,d:+(1-s.acertos/s.total).toFixed(2)})))}`;
 
   msg.textContent="Consultando a IA...";
@@ -1959,6 +2319,7 @@ function baixar(nome,texto){
   a.href=URL.createObjectURL(b); a.download=nome; a.click();
 }
 function exportar(){
+  toast("Exportando seus dados…", "info");
   db.ultimaExportacao = hoje();
   salvar();
   baixar("estudos-tjsc-"+hoje()+".json",JSON.stringify(db,null,2));
@@ -2009,7 +2370,196 @@ function resumo(){
     aviso=" · ⚠️ nunca exportado";
   }
   document.getElementById("resumo-dados").textContent=
-    `${db.sessoes.length} sessões · ${(min/60).toFixed(1).replace(".",",")} h · ${db.questoes.length} baterias · ${db.planos.length} plano(s)${aviso}.`;
+    `${db.sessoes.length} sessões · ${(min/60).toFixed(1).replace(".",",")} h · ${db.questoes.length} baterias · ${db.planos.length} plano(s) · ${(db.revisoes||[]).length} revisões · versão ${db.versao}${aviso}.`;
+}
+
+/* ============================================================ PRÓXIMA AÇÃO */
+function calcularProximaAcao(){
+  const p = planoAtivo();
+  const disc = disciplinas();
+  const temEdital = db.edital && db.edital.disciplinas && db.edital.disciplinas.length;
+
+  if(!db.rotina.configurada)
+    return {ico:"⏰", t:"Primeiro: diga quanto tempo você tem",
+      d:"São 3 perguntas sobre trabalho, faculdade e folgas. Sem isso, o plano chuta suas horas.",
+      b:"Configurar rotina", f:()=>{ tab("plano"); subTab("rotina"); }};
+
+  if(!temEdital)
+    return {ico:"📄", t:"Agora: carregue o edital",
+      d:"Anexe o PDF ou busque o concurso. É dele que saem as matérias.",
+      b:"Abrir assistente", f:()=> abrirAssistente()};
+
+  if(!p)
+    return {ico:"⚡", t:"Tudo pronto para gerar seu plano",
+      d:`${disc.length} disciplinas carregadas e ${horasSemana(janela().inicio).toString().replace(".",",")} h por semana disponíveis.`,
+      b:"Montar meu plano", f:()=> abrirAssistente()};
+
+  const rev = revisoesPendentes();
+  if(rev.length)
+    return {ico:"🔁", t:`${rev.length} revisão(ões) esperando`,
+      d:"Revisar é o que fixa o conteúdo. Leva poucos minutos.",
+      b:"Revisar agora", f:()=>{ tab("plano"); subTab("hoje"); }};
+
+  const hj = hoje(), w = dow(hj);
+  const blocos = (p.ciclo[w] || []);
+  const pend = blocos.filter((b,i)=> !(p.feitos && p.feitos[chaveBloco(hj,i)]));
+  if(pend.length)
+    return {ico:"🎯", t:`Hoje: ${pend.length} bloco(s) de estudo`,
+      d:pend.map(b=>`${b.materia} ${b.horas.toString().replace(".",",")} h`).join(" · "),
+      b:"Começar", f:()=>{ tab("crono"); }};
+
+  return {ico:"✅", t:"Dia cumprido",
+    d:"Você fez o que o plano pedia. Descanse ou adiante uma revisão.",
+    b:"Ver prioridades", f:()=> tab("prio")};
+}
+function renderProximaAcao(){
+  const box = document.getElementById("proximaAcao");
+  if(!box) return;
+  const a = calcularProximaAcao();
+  box.innerHTML = `<div style="display:flex;gap:11px;align-items:flex-start">
+      <span style="font-size:22px">${a.ico}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:800;color:#0A2240;line-height:1.3">${a.t}</div>
+        <div style="font-size:11.5px;color:#5B6B80;margin-top:3px;line-height:1.4">${a.d}</div>
+        <button class="btn principal mini" style="margin-top:9px" id="btnProxima">${a.b}</button>
+      </div>
+    </div>`;
+  const b = document.getElementById("btnProxima");
+  if(b) b.onclick = a.f;
+}
+let statsAbertas = false;
+function alternarStats(){
+  statsAbertas = !statsAbertas;
+  const bloco = document.getElementById("blocoStats");
+  const btn = document.getElementById("btnStats");
+  if(!bloco) return;
+  bloco.classList.toggle("oculto", !statsAbertas);
+  if(btn) btn.textContent = statsAbertas ? "📊 Ocultar estatísticas" : "📊 Ver estatísticas";
+  if(statsAbertas){ setTimeout(()=> desenharTudo(true), 60); }
+}
+
+/* ============================================================ REVISÃO ESPAÇADA (1-7-30) */
+const ESCADA_REVISAO = [1, 7, 30];
+
+function agendarRevisao(materia, topico, dias){
+  db.revisoes = db.revisoes || [];
+  const chave = (materia + "|" + (topico||"")).toLowerCase();
+  const existente = db.revisoes.find(r=> (r.materia + "|" + (r.topico||"")).toLowerCase() === chave);
+  const proxima = maisDias(hoje(), dias);
+  if(existente){
+    existente.proxima = proxima;
+    existente.nivel = dias;
+  } else {
+    db.revisoes.push({id:"r" + Date.now().toString(36) + Math.random().toString(36).slice(2,4),
+      materia, topico: topico || "", nivel: dias, proxima, criada: hoje()});
+  }
+  salvar();
+  atualizarSino();
+  return proxima;
+}
+function revisoesPendentes(){
+  const hj = hoje();
+  return (db.revisoes || []).filter(r=> r.proxima <= hj).sort((a,b)=> a.proxima.localeCompare(b.proxima));
+}
+function responderRevisao(id, acertou){
+  const r = (db.revisoes || []).find(x=> x.id === id);
+  if(!r) return;
+  if(acertou){
+    const idx = ESCADA_REVISAO.indexOf(r.nivel);
+    const proximo = ESCADA_REVISAO[idx + 1];
+    if(!proximo){
+      db.revisoes = db.revisoes.filter(x=> x.id !== id);   // concluiu o ciclo 1-7-30
+      toast("Revisão concluída: " + r.materia, "ok");
+    } else {
+      r.nivel = proximo;
+      r.proxima = maisDias(hoje(), proximo);
+      toast("Volta em " + proximo + " dia(s)", "ok");
+    }
+  } else {
+    r.nivel = 1;
+    r.proxima = maisDias(hoje(), 1);
+    toast("Errado — volto amanhã", "info");
+  }
+  salvar(); renderRevisoes(); renderHoje(); atualizarSino();
+}
+function renderRevisoes(){
+  const box = document.getElementById("revisoesHoje");
+  if(!box) return;
+  const pend = revisoesPendentes();
+  if(!pend.length){
+    box.innerHTML = `<div class="mini">Nada para revisar hoje.` +
+      ((db.revisoes||[]).length ? ` ${db.revisoes.length} revisão(ões) agendada(s).` : "") + `</div>`;
+    return;
+  }
+  box.innerHTML = pend.slice(0,8).map(r=>`
+    <div class="rev">
+      <span class="t">${r.topico || r.materia}<small>${r.topico ? r.materia : ""} · revisão de ${r.nivel} dia(s)</small></span>
+      <button class="no" onclick="responderRevisao('${r.id}',false)">errei</button>
+      <button class="ok" onclick="responderRevisao('${r.id}',true)">acertei</button>
+    </div>`).join("") +
+    (pend.length > 8 ? `<div class="mini">+${pend.length-8} pendentes</div>` : "");
+}
+
+/* ============================================================ CONSTÂNCIA */
+function calcularStreak(){
+  const dias = new Set(db.sessoes.map(s=>s.data));
+  let seq = 0;
+  let cursor = hoje();
+  if(!dias.has(cursor)) cursor = maisDias(cursor, -1);   // tolera ainda não ter estudado hoje
+  while(dias.has(cursor)){ seq++; cursor = maisDias(cursor, -1); }
+  return seq;
+}
+function renderConstancia(){
+  const box = document.getElementById("constancia");
+  if(!box) return;
+  const dias = {};
+  db.sessoes.forEach(s=>{ dias[s.data] = (dias[s.data]||0) + s.minutos; });
+  let blocos = "";
+  for(let i = 29; i >= 0; i--){
+    const d = maisDias(hoje(), -i);
+    const m = dias[d] || 0;
+    const cor = m === 0 ? "#E9EFF6" : m < 30 ? "#C9E4EE" : m < 60 ? "#7FC3D2" : m < 120 ? "#30A6B5" : "#0A2240";
+    blocos += `<i title="${d}: ${m} min" style="background:${cor}"></i>`;
+  }
+  const seq = calcularStreak();
+  box.innerHTML = `<div class="streak">🔥 <b>${seq}</b> dia(s) seguidos${seq === 0 ? " — comece hoje" : ""}</div>
+    <div class="heat">${blocos}</div>
+    <div class="mini">Últimos 30 dias · cor mais escura = mais minutos</div>`;
+}
+
+/* ============================================================ CADERNO DE ERROS */
+function pontosFracos(){
+  const m = {};
+  db.questoes.forEach(q=>{
+    const k = q.materia + "|" + q.assunto;
+    if(!m[k]) m[k] = {materia:q.materia, assunto:q.assunto, total:0, acertos:0};
+    m[k].total += q.total; m[k].acertos += q.acertos;
+  });
+  return Object.values(m)
+    .filter(x=> x.total >= 3 && (x.acertos / x.total) < 0.6)
+    .map(x=> ({...x, erro: 1 - x.acertos/x.total}))
+    .sort((a,b)=> b.erro - a.erro);
+}
+function renderCadernoErros(){
+  const box = document.getElementById("cadernoErros");
+  if(!box) return;
+  const fracos = pontosFracos();
+  if(!fracos.length){
+    box.innerHTML = `<div class="mini">Nenhum ponto fraco registrado. Faça questões na aba Questões.</div>`;
+    return;
+  }
+  box.innerHTML = fracos.slice(0,6).map((x,i)=>`
+    <div class="rev">
+      <span class="t">${x.assunto}<small>${x.materia} · ${x.acertos}/${x.total} (${Math.round(x.erro*100)}% de erro)</small></span>
+      <button class="ok" onclick="revisarPontoFraco(${i})">revisar</button>
+    </div>`).join("");
+}
+function revisarPontoFraco(i){
+  const x = pontosFracos()[i];
+  if(!x) return;
+  const p = agendarRevisao(x.materia, x.assunto, 1);
+  toast("Revisão agendada para " + formatarBR(p), "ok");
+  renderRevisoes();
 }
 
 /* ============================================================ AVISOS DO DIA */
@@ -2053,6 +2603,11 @@ function gerarAvisos(){
         b:"Prioridades", acao:"prioridade"});
     }
   }
+
+  const pendRev = revisoesPendentes();
+  if(pendRev.length)
+    out.push({n:"warn", ico:"🔁", t:`${pendRev.length} revisão(ões) para hoje`,
+      d:pendRev.slice(0,3).map(r=>r.topico || r.materia).join(" · "), b:"Revisar", acao:"hoje"});
 
   ranking().filter(s=> s.dif >= 0.6).slice(0,2).forEach(s=>{
     out.push({n:"warn", ico:"🎯", t:`Reforçar ${s.assunto}`,
@@ -2204,6 +2759,496 @@ document.addEventListener("keydown", (e)=>{
   }
 });
 
+/* ============================================================ ASSISTENTE (questionário) */
+const WZ = { passo: 1, total: 6, fonte: null, textoEdital: "", cargos: [], cargoEscolhido: null, disciplinas: null };
+const WZ_TITULOS = ["", "Seu edital", "Dificuldade", "Questões da prova", "Sua rotina", "Data da prova", "Confirmação"];
+
+function abrirAssistente(){
+  WZ.passo = 1;
+  document.getElementById("assistente").classList.remove("oculto");
+  renderWizard();
+}
+function fecharAssistente(){
+  document.getElementById("assistente").classList.add("oculto");
+}
+function wzIr(passo){
+  WZ.passo = Math.max(1, Math.min(6, passo));
+  renderWizard();
+  const corpo = document.getElementById("wz-corpo");
+  if(corpo) corpo.scrollTop = 0;
+}
+function wzBarra(){
+  const i = document.getElementById("wz-progresso");
+  if(i) i.style.width = Math.round((WZ.passo / 6) * 100) + "%";
+  const titulo = document.getElementById("wz-titulo");
+  if(titulo) titulo.textContent = "Montar meu plano · " + (WZ_TITULOS[WZ.passo] || "");
+}
+function wzRodape(html){
+  document.getElementById("wz-rodape").innerHTML = html || "";
+}
+function renderWizard(){
+  wzBarra();
+  const c = document.getElementById("wz-corpo");
+  if(WZ.passo === 1) wzPasso1(c);
+  else if(WZ.passo === 2) wzPassoDificuldade(c);
+  else if(WZ.passo === 3) wzPassoQuestoes(c);
+  else if(WZ.passo === 4) wzPasso2(c);
+  else if(WZ.passo === 5) wzPasso3(c);
+  else wzPasso4(c);
+}
+
+/* ---------- passo 1: de onde vem o edital ---------- */
+function wzPasso1(c){
+  c.innerHTML = `
+    <h4>Você já tem o edital?</h4>
+    <p class="sub">A partir dele eu monto as matérias, as submatérias e distribuo suas horas de estudo.</p>
+    <button class="wz-op" onclick="wzEscolherFonte('pdf')">
+      <span class="em">📄</span><span class="tx"><b>Tenho o PDF</b><span>anexar o arquivo do edital</span></span></button>
+    <button class="wz-op" onclick="wzEscolherFonte('colar')">
+      <span class="em">📋</span><span class="tx"><b>Vou colar o texto</b><span>copiar o Anexo I do edital</span></span></button>
+    <button class="wz-op" onclick="wzEscolherFonte('web')">
+      <span class="em">🔍</span><span class="tx"><b>Não tenho — procurar na internet</b><span>buscar o concurso</span></span></button>
+    <button class="wz-op" onclick="wzEscolherFonte('sem')">
+      <span class="em">⚡</span><span class="tx"><b>Montar sem edital</b><span>uso uma lista padrão de disciplinas</span></span></button>`;
+  wzRodape("");
+}
+function wzEscolherFonte(fonte){
+  WZ.fonte = fonte;
+  if(fonte === "pdf"){
+    const input = document.getElementById("arqEdital");
+    input.onchange = async () => {
+      const arq = input.files[0];
+      if(!arq) return;
+      const msg = document.getElementById("wz-corpo");
+      msg.innerHTML = `<h4>Lendo o arquivo…</h4><p class="sub">${arq.name}</p>`;
+      try{
+        const buf = await arq.arrayBuffer();
+        let texto = "";
+        try{ texto = await extrairComPdfJS(buf); }catch(e){ texto = await extrairTextoPDF(buf); }
+        texto = (texto || "").trim();
+        input.value = "";
+        if(texto.length < 200){ toast("Não consegui ler o PDF", "err"); wzIr(1); return; }
+        WZ.textoEdital = texto;
+        wzDetectarCargos();
+      }catch(e){ toast("Falhou ao ler: " + e.message, "err"); wzIr(1); }
+    };
+    input.click();
+    return;
+  }
+  if(fonte === "colar"){
+    const c = document.getElementById("wz-corpo");
+    c.innerHTML = `<h4>Cole o texto do edital</h4>
+      <p class="sub">O ideal é o Anexo I (conteúdo programático).</p>
+      <textarea id="wz-texto" style="min-height:200px" placeholder="Cole aqui…"></textarea>`;
+    wzRodape(`<button class="btn principal" style="width:100%" onclick="wzColar()">Continuar</button>`);
+    return;
+  }
+  if(fonte === "web"){
+    fecharAssistente();
+    tab("plano"); subTab("edital");
+    setTimeout(()=> focar("busca-termo"), 250);
+    toast("Busque o concurso e volte pelo botão Montar meu plano", "info");
+    return;
+  }
+  // sem edital: usa o padrao
+  db.edital = {texto:"", disciplinas: Object.keys(PADRAO).map(n=>({nome:n, topicos:PADRAO[n].slice()})), nome:"Plano padrão"};
+  db.pesos = {};
+  db.edital.disciplinas.forEach(d=> db.pesos[d.nome] = Math.max(1, d.topicos.length));
+  salvar(); renderPesos(); renderMaterias(); popularSelects();
+  WZ.disciplinas = db.edital.disciplinas;
+  toast("Usei a lista padrão de 11 disciplinas", "info");
+  wzIr(2);
+}
+function wzColar(){
+  const txt = (document.getElementById("wz-texto").value || "").trim();
+  if(txt.length < 200){ toast("Cole mais texto", "err"); return; }
+  WZ.textoEdital = txt;
+  wzDetectarCargos();
+}
+function wzDetectarCargos(){
+  const c = document.getElementById("wz-corpo");
+  const cargos = detectarCargosEdital(WZ.textoEdital);
+  WZ.cargos = cargos;
+  if(!cargos.length){
+    c.innerHTML = `<h4>Não identifiquei os cargos</h4>
+      <p class="sub">O texto pode estar incompleto. Você pode seguir com o que foi lido.</p>`;
+    wzRodape(`<button class="btn principal" style="width:100%" onclick="wzUsarTextoDireto()">Usar o texto assim</button>
+      <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="wzIr(1)">Voltar</button>`);
+    return;
+  }
+  c.innerHTML = `<h4>Qual é o seu cargo?</h4>
+    <p class="sub">Encontrei ${cargos.length} cargos no edital.</p>` +
+    cargos.map((x,i)=>`<button class="wz-op" onclick="wzEscolherCargo(${i})">
+      <span class="em">${/T[ÉE]CNICO/i.test(x.nome) ? "🎯" : "📚"}</span>
+      <span class="tx"><b>${x.nome}</b><span>nível ${x.nivel}</span></span></button>`).join("");
+  wzRodape(`<button class="btn sec mini" style="width:100%" onclick="wzIr(1)">Voltar</button>`);
+}
+let _wzCargo = false;
+async function wzEscolherCargo(i){
+  if(_wzCargo){ toast("Aguarde, estou lendo o cargo…", "info"); return; }
+  _wzCargo = true;
+  try{ return await _wzEscolherCargo(i); } finally { _wzCargo = false; }
+}
+async function _wzEscolherCargo(i){
+  const cargo = WZ.cargos[i];
+  if(!cargo) return;
+  const c = document.getElementById("wz-corpo");
+  c.innerHTML = `<h4>Lendo ${cargo.nome}…</h4><p class="sub" id="wz-aguarde">aguarde</p>`;
+  wzRodape("");
+  let seg = 0;
+  const cron = setInterval(()=>{ seg++; const el = document.getElementById("wz-aguarde"); if(el) el.textContent = "aguarde " + seg + "s"; }, 1000);
+
+  const bloco = blocoDoCargo(WZ.textoEdital, cargo.nome);
+  let disc = null;
+  if(db.apiKey){
+    const prompt = `Abaixo está o conteúdo programático de UM cargo de um concurso público brasileiro.
+Liste todas as disciplinas e, para cada uma, os tópicos.
+Responda APENAS com JSON:
+{"disciplinas":[{"nome":"","topicos":["",""]}]}
+Regras: nomes exatos das disciplinas; TODOS os tópicos; não invente.
+TEXTO:
+${bloco}`;
+    try{
+      const r = await chamarGeminiBusca(prompt, 8192, false);
+      disc = (r.obj.disciplinas || []).filter(d=> d && d.nome && (d.topicos||[]).length)
+        .map(d=>({nome: limparTextoEdital(d.nome), topicos: (d.topicos||[]).map(limparTextoEdital)}));
+    }catch(e){ disc = null; }
+  }
+  if(!disc || !disc.length){
+    disc = parseEdital(bloco.replace(/\s+([a-záéíóúç]{1,3})\s/g, " ")).filter(d=> d.topicos.length);
+  }
+  clearInterval(cron);
+  if(!disc || !disc.length){
+    toast("Não consegui ler este cargo", "err");
+    wzIr(1);
+    return;
+  }
+  db.edital = {
+    texto: bloco,
+    disciplinas: disc,
+    nome: cargo.nome.slice(0, 44)
+  };
+  db.pesos = {};
+  disc.forEach(d=> db.pesos[d.nome] = Math.max(1, d.topicos.length));
+  const campo = document.getElementById("p-nome");
+  if(campo && !campo.value) campo.value = cargo.nome.slice(0, 44);
+  salvar(); renderPesos(); renderMaterias(); popularSelects();
+  WZ.disciplinas = disc;
+  WZ.cargoEscolhido = cargo.nome;
+  const total = disc.reduce((a,d)=>a+d.topicos.length,0);
+  toast(`${cargo.nome}: ${disc.length} disciplinas, ${total} tópicos`, "ok");
+  wzIr(2);   // agora vai para a dificuldade
+}
+function wzUsarTextoDireto(){
+  const disc = parseEdital(WZ.textoEdital);
+  if(!disc.length){ toast("Não consegui ler o texto", "err"); return; }
+  db.edital = {texto:WZ.textoEdital, disciplinas:disc, nome:"Edital importado"};
+  db.pesos = {};
+  disc.forEach(d=> db.pesos[d.nome] = Math.max(1, d.topicos.length));
+  salvar(); renderPesos(); renderMaterias(); popularSelects();
+  WZ.disciplinas = disc;
+  wzIr(2);
+}
+
+/* ---------- passo 2: dificuldade declarada ---------- */
+function wzPassoDificuldade(c){
+  const disc = disciplinas();
+  const totalQ = {};
+  db.questoes.forEach(q=>{ totalQ[q.materia] = (totalQ[q.materia]||0) + q.total; });
+
+  c.innerHTML = `
+    <h4>Qual a sua dificuldade em cada matéria?</h4>
+    <p class="sub">0 = muita facilidade · 3 = neutro · 5 = muita dificuldade.
+      Comecei todas no 3 — arraste as que você sente diferença.</p>
+    ${disc.map((d,i)=>`
+      <div class="slider">
+        <span class="nm">${d.nome}<small>${d.topicos.length} submatérias${totalQ[d.nome]?(" · "+totalQ[d.nome]+" questões feitas"):""}</small></span>
+        <input type="range" min="0" max="5" step="1" value="${dificuldadeDe(d.nome)}"
+               oninput="wzMudarDificuldade('${d.nome.replace(/'/g,"\\'")}', this.value)">
+        <span class="val" id="wz-nivel-${i}">${dificuldadeDe(d.nome)}</span>
+      </div>`).join("")}
+    <div class="mini" style="margin-top:10px">
+      Isso entra no cálculo: matéria com 5 recebe até 1,4× mais tempo; com 0, até 0,6×.
+    </div>`;
+
+  wzRodape(`<button class="btn principal" style="width:100%" onclick="wzIr(3)">Continuar</button>
+    <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="wzIr(1)">Voltar</button>`);
+}
+function wzMudarDificuldade(nome, valor){
+  db.dificuldade[nome] = Number(valor);
+  salvar();
+  const disc = disciplinas();
+  const i = disc.findIndex(d=> d.nome === nome);
+  const el = document.getElementById("wz-nivel-" + i);
+  if(el) el.textContent = valor;
+}
+
+/* ---------- passo 3: questões da prova e peso ---------- */
+function wzPassoQuestoes(c){
+  const disc = disciplinas();
+  const preenchidas = disc.filter(d=> metaDe(d.nome).questoes > 0).length;
+  c.innerHTML = `
+    <h4>Quantas questões caem de cada matéria?</h4>
+    <p class="sub">Se o edital informar o número de questões e o peso de cada disciplina, coloque aqui.
+      Se não souber, deixe em branco — eu uso o número de submatérias como peso.</p>
+    ${preenchidas ? `<div class="status ok" style="margin-bottom:10px">${preenchidas} matéria(s) já preenchidas.</div>` : ""}
+    ${disc.map(d=>{
+      const m = metaDe(d.nome);
+      return `<div class="wz-campo" style="padding:10px;margin-bottom:8px">
+        <div style="font-size:12.5px;font-weight:700;color:#0A2240">${d.nome}</div>
+        <div class="linha" style="margin-top:6px">
+          <label>Questões na prova</label>
+          <input type="number" min="0" max="200" value="${m.questoes || ""}" placeholder="—"
+                 oninput="wzMeta('${d.nome.replace(/'/g,"\\'")}','questoes',this.value)">
+          <label style="flex:0 0 auto">Peso</label>
+          <input type="number" min="1" max="10" value="${m.peso}" style="width:56px"
+                 oninput="wzMeta('${d.nome.replace(/'/g,"\\'")}','peso',this.value)">
+        </div>
+      </div>`;
+    }).join("")}
+    <div class="mini">Fórmula: <b>peso da matéria = questões × peso do edital</b>, ajustado pela sua dificuldade.
+      Sem esse dado, uso o número de submatérias.</div>`;
+
+  wzRodape(`<button class="btn principal" style="width:100%" onclick="wzIr(4)">Continuar</button>
+    <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="wzIr(2)">Voltar</button>`);
+}
+function wzMeta(nome, campo, valor){
+  definirMeta(nome, campo, valor);
+}
+
+/* ---------- passo 4: rotina ---------- */
+function wzPasso2(c){
+  const r = db.rotina;
+  const dia = (id, lista) => [1,2,3,4,5,6,0].map(d=>
+    `<button class="${lista.includes(d)?'on':''}" onclick="wzToggle('${id}',${d})">${NOMES_DIA[d]}</button>`).join("");
+  c.innerHTML = `
+    <h4>Quanto tempo você tem por dia?</h4>
+    <p class="sub">Responda só o que vale para você. Isso define as horas que o plano vai usar.</p>
+
+    <div class="wz-campo">
+      <div style="font-size:12.5px;font-weight:700;color:#0A2240;margin-bottom:6px">Você trabalha?</div>
+      <div class="linha"><label>Horário</label>
+        <input type="time" id="wz-trab-ini" value="${r.trabIni}">
+        <input type="time" id="wz-trab-fim" value="${r.trabFim}"></div>
+      <div class="linha"><label>Hora extra (min)</label><input type="number" id="wz-extra" min="0" value="${r.extra}"></div>
+      <div class="mini">Dias:</div>
+      <div class="dias" id="wz-trab-dias">${dia('trabDias', r.trabDias||[1,2,3,4,5])}</div>
+    </div>
+
+    <div class="wz-campo">
+      <div style="font-size:12.5px;font-weight:700;color:#0A2240;margin-bottom:6px">Faculdade ou curso?</div>
+      <div class="linha"><label>Horário</label>
+        <input type="time" id="wz-facul-ini" value="${r.faculIni}">
+        <input type="time" id="wz-facul-fim" value="${r.faculFim}"></div>
+      <div class="mini">Dias:</div>
+      <div class="dias" id="wz-facul-dias">${dia('faculDias', r.faculDias||[1,2,3,4,5])}</div>
+    </div>
+
+    <div class="wz-campo">
+      <div style="font-size:12.5px;font-weight:700;color:#0A2240;margin-bottom:6px">Dias de folga (sem estudo)</div>
+      <div class="dias" id="wz-folgas">${dia('folgas', r.folgas||[0])}</div>
+      <div class="linha" style="margin-top:8px"><label>Horas de sono</label>
+        <input type="number" id="wz-dormir" min="4" max="10" step="0.5" value="${r.dormir}"></div>
+      <div class="linha"><label>Deslocamento (min/dia)</label>
+        <input type="number" id="wz-desloc" min="0" value="${r.desloc}"></div>
+    </div>
+
+    <div id="wz-previa" class="mini"></div>`;
+  wzRodape(`<button class="btn principal" style="width:100%" onclick="wzSalvarRotina()">Continuar</button>
+    <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="wzIr(1)">Voltar</button>`);
+  wzAtualizarPrevia();
+}
+function wzToggle(campo, d){
+  const atual = db.rotina[campo] || [];
+  db.rotina[campo] = atual.includes(d) ? atual.filter(x=>x!==d) : [...atual, d].sort();
+  const id = campo === "trabDias" ? "wz-trab-dias" : campo === "faculDias" ? "wz-facul-dias" : "wz-folgas";
+  const box = document.getElementById(id);
+  if(box) box.innerHTML = [1,2,3,4,5,6,0].map(x=>
+    `<button class="${(db.rotina[campo]||[]).includes(x)?'on':''}" onclick="wzToggle('${campo}',${x})">${NOMES_DIA[x]}</button>`).join("");
+  wzAtualizarPrevia();
+}
+function wzAtualizarPrevia(){
+  const el = document.getElementById("wz-previa");
+  if(!el) return;
+  const disp = disponibilidade();
+  const total = disp.reduce((a,b)=>a+b,0);
+  el.innerHTML = `Horas livres por dia: ` +
+    [1,2,3,4,5,6,0].map(d=>`${NOMES_DIA[d]} ${disp[d].toString().replace(".",",")}h`).join(" · ") +
+    `<br><b>Total: ${total.toFixed(1).replace(".",",")} h por semana</b>`;
+}
+function wzSalvarRotina(){
+  const g = id => { const el = document.getElementById(id); return el ? el.value : ""; };
+  db.rotina = Object.assign({}, db.rotina, {
+    configurada: true,
+    trabalha: true,
+    trabIni: g("wz-trab-ini") || db.rotina.trabIni,
+    trabFim: g("wz-trab-fim") || db.rotina.trabFim,
+    extra: parseInt(g("wz-extra")) || 0,
+    faculIni: g("wz-facul-ini") || db.rotina.faculIni,
+    faculFim: g("wz-facul-fim") || db.rotina.faculFim,
+    dormir: parseFloat(g("wz-dormir")) || 8,
+    desloc: parseInt(g("wz-desloc")) || 0
+  });
+  salvar();
+  if(horasSemana(janela().inicio) < 1){
+    toast("Sua rotina não deixa horas livres — revise as folgas", "err");
+    return;
+  }
+  wzIr(4);
+}
+
+/* ---------- passo 3: prova ---------- */
+function wzPasso3(c){
+  const j = janela();
+  c.innerHTML = `
+    <h4>Já tem data de prova?</h4>
+    <p class="sub">Se não souber, deixo 180 dias de plano a partir de hoje.</p>
+    <div class="wz-campo">
+      <div class="linha"><label>Data da prova</label>
+        <input type="date" id="wz-prova" value="${db.rotina.prova || ""}"></div>
+      <div class="mini">Hoje o plano iria de ${j.inicio.split("-").reverse().join("/")} a ${j.fim.split("-").reverse().join("/")}.</div>
+    </div>`;
+  wzRodape(`<button class="btn principal" style="width:100%" onclick="wzSalvarProva()">Continuar</button>
+    <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="wzIr(4)">Voltar</button>`);
+}
+function wzSalvarProva(){
+  const v = (document.getElementById("wz-prova").value || "").trim();
+  db.rotina.prova = v;
+  salvar(); atualizarJanela();
+  wzIr(6);
+}
+
+/* ---------- passo 4: confirmação ---------- */
+function wzPasso4(c){
+  const disc = disciplinas();
+  const total = disc.reduce((a,d)=>a+(d.topicos||[]).length, 0);
+  const horas = horasSemana(janela().inicio);
+  const j = janela();
+  const top = [...disc].sort((a,b)=>(db.pesos[b.nome]||1)-(db.pesos[a.nome]||1)).slice(0,4);
+  const rk = ranking().slice(0,3);
+  c.innerHTML = `
+    <h4>Está tudo certo?</h4>
+    <p class="sub">É com isso que eu vou montar o plano.</p>
+    <div class="resumo-plano">
+      <b>${disc.length} disciplinas · ${total} submatérias</b>
+      <div>Cargo/base: ${(db.edital && db.edital.nome) || "lista padrão"}</div>
+      <div>Período: ${j.inicio.split("-").reverse().join("/")} a ${j.fim.split("-").reverse().join("/")} (${j.dias} dias)</div>
+      <div>Disponibilidade: <b>${horas.toString().replace(".",",")} h por semana</b></div>
+    </div>
+    <div class="mini" style="margin-bottom:8px"><b>Pesos (nº de submatérias):</b> ${top.map(d=>`${d.nome} ${db.pesos[d.nome]||1}`).join(" · ")}</div>
+    <div class="mini" style="margin-bottom:8px"><b>Questões da prova:</b> ${
+      disc.filter(d=> metaDe(d.nome).questoes > 0).length
+        ? disc.filter(d=>metaDe(d.nome).questoes>0).map(d=>`${d.nome} ${metaDe(d.nome).questoes}${metaDe(d.nome).peso>1?("×"+metaDe(d.nome).peso):""}`).join(" · ")
+        : "não informadas — usando nº de submatérias"
+    }</div>
+    <div class="mini" style="margin-bottom:8px"><b>Dificuldade que você marcou:</b> ${
+      disc.filter(d=>dificuldadeDe(d.nome) !== 3)
+        .sort((a,b)=> dificuldadeDe(b.nome)-dificuldadeDe(a.nome))
+        .slice(0,5).map(d=>`${d.nome} ${dificuldadeDe(d.nome)}`).join(" · ") || "todas neutras (3)"
+    }</div>
+    <div class="mini" style="margin-bottom:8px"><b>Mais tempo para:</b> ${rk.length ? rk.map(s=>`${s.assunto} (${Math.round(s.dif*100)}% de erro)`).join(" · ") : "ainda sem questões registradas — divisão só por peso"}</div>
+    <div class="mini">A IA distribui as horas por peso e dificuldade; o app confere se a soma bate com sua disponibilidade.</div>`;
+  wzRodape(`<button class="btn principal" style="width:100%" onclick="wzGerar()">Gerar Plano</button>
+    <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="wzIr(3)">Voltar às questões</button>
+    <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="wzGerarRegras()">Gerar sem IA (por regras)</button>`);
+}
+async function wzGerar(){
+  fecharAssistente();
+  tab("plano"); subTab("hoje");
+  await gerarComIA();
+}
+function wzGerarRegras(){
+  fecharAssistente();
+  tab("plano"); subTab("hoje");
+  novoPlanoRegras();
+}
+
+/* ============================================================ CASCATA DE AÇÕES */
+function abrirMenu(){
+  document.getElementById("painelMenu").classList.remove("oculto");
+}
+function fecharMenu(ev){
+  const el = document.getElementById("painelMenu");
+  if(ev && ev.target !== el) return;
+  el.classList.add("oculto");
+}
+function menuAcao(cod){
+  fecharMenu();
+  if(cod === "buscar"){ tab("plano"); subTab("edital"); setTimeout(()=> focar("busca-termo"), 250); }
+  else if(cod === "anexar"){ tab("plano"); subTab("edital"); setTimeout(()=> document.getElementById("arqEdital").click(), 250); }
+  else if(cod === "hoje"){ tab("plano"); subTab("hoje"); }
+  else if(cod === "rotina"){ tab("plano"); subTab("rotina"); }
+  else if(cod === "avancado"){ tab("plano"); subTab("edital"); }
+  else if(cod === "gerar"){ tab("plano"); abrirConfirma(); }
+}
+function focar(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.scrollIntoView({behavior:"smooth", block:"center"});
+  try{ el.focus({preventScroll:true}); }catch(e){}
+}
+function abrirConfirma(){
+  const disc = disciplinas();
+  const total = disc.reduce((a,d)=>a+(d.topicos||[]).length, 0);
+  const p = planoAtivo();
+  const horas = horasSemana(janela().inicio);
+  const j = janela();
+
+  if(!disc.length || (disc.length === 1 && !disc[0].topicos.length)){
+    toast("Carregue o edital primeiro", "err");
+    document.getElementById("painelConfirma").classList.remove("oculto");
+    document.getElementById("confirmaConteudo").innerHTML =
+      `<div class="status err">Ainda não tenho o edital.</div>
+       <button class="btn principal" style="width:100%" onclick="fecharConfirma(); menuAcao('anexar')">
+         Anexar o edital</button>`;
+    return;
+  }
+
+  // prioridades: peso x dificuldade
+  const rk = ranking().slice(0,3);
+  const linhas = [];
+  if(rk.length){
+    linhas.push(`<div><b>Mais tempo para:</b> ` + rk.map(s=>`${s.assunto} (${Math.round(s.dif*100)}% de erro)`).join(" · ") + `</div>`);
+  } else {
+    linhas.push(`<div><b>Sem dados de questões ainda</b> — a divisão será só pelo peso do edital.</div>`);
+  }
+
+  const topPesos = [...disc].sort((a,b)=> (db.pesos[b.nome]||1)-(db.pesos[a.nome]||1)).slice(0,3);
+
+  document.getElementById("confirmaConteudo").innerHTML = `
+    <div class="resumo-plano">
+      <b>${disc.length} disciplinas · ${total} submatérias</b>
+      <div>Base: o edital que você carregou.</div>
+      <div>Período: ${j.inicio.split("-").reverse().join("/")} a ${j.fim.split("-").reverse().join("/")} (${j.dias} dias).</div>
+      <div>Sua rotina permite <b>${horas.toString().replace(".",",")} h por semana</b>.</div>
+      <div>As horas são divididas pelo peso (nº de submatérias), com ajuste pela sua dificuldade nas questões.</div>
+    </div>
+    <div class="mini" style="margin-bottom:10px">
+      Maiores pesos agora: ${topPesos.map(d=>`${d.nome} (${db.pesos[d.nome]||1})`).join(" · ")}
+    </div>
+    ${linhas.map(l=>`<div class="mini" style="margin-bottom:10px">${l}</div>`).join("")}
+    <button class="btn principal" style="width:100%" onclick="fecharConfirma(); gerarComIA()">Gerar com IA</button>
+    <button class="btn sec" style="width:100%;margin-top:6px" onclick="fecharConfirma(); novoPlanoRegras()">Gerar por regras (sem IA)</button>
+    <button class="btn sec" style="width:100%;margin-top:6px" onclick="fecharConfirma(); menuAcao('rotina')">Antes, ajustar a rotina</button>
+  `;
+  document.getElementById("painelConfirma").classList.remove("oculto");
+}
+function fecharConfirma(ev){
+  const el = document.getElementById("painelConfirma");
+  if(ev && ev.target !== el) return;
+  el.classList.add("oculto");
+}
+function atualizarBase(){
+  const el = document.getElementById("basePlano");
+  if(!el) return;
+  const disc = disciplinas();
+  const total = disc.reduce((a,d)=>a+(d.topicos||[]).length, 0);
+  const temEdital = db.edital && db.edital.disciplinas && db.edital.disciplinas.length;
+  el.textContent = temEdital
+    ? `${disc.length} disciplinas · ${total} submatérias carregadas`
+    : "Nenhum edital carregado ainda";
+}
+
 /* ============================================================ SUBABAS */
 function ajustarAlturaHeader(){
   const h = document.querySelector("header");
@@ -2311,6 +3356,7 @@ function marcarBloco(i){
     p.feitos[k] = true;
     db.sessoes.push({data:d, materia:b.materia, minutos:Math.round(b.horas*60),
       quando:new Date().toISOString(), bloco:"plano", topico:b.topico||""});
+    if(b.topico) agendarRevisao(b.materia, b.topico, 1);
     toast("Feito! +" + b.horas.toString().replace(".",",") + " h de " + b.materia, "ok");
   }
   salvar(); renderHoje(); renderSaldo(); atualizarTudo();
@@ -2360,10 +3406,10 @@ function tab(n){
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===n));
   if(n==="reg") renderRegistro();
   if(n==="quest") renderHistorico();
-  if(n==="prio") renderPrioridades();
+  if(n==="prio"){ renderPrioridades(); renderCadernoErros(); }
   if(n==="plano"){ renderHoje(); renderChips2(); renderSaldo(); renderSemana(); renderRotinaTabela();
     renderListaPlanos(); renderPesos(); resumo(); atualizarJanela(); }
-  if(n==="painel"){ renderChips(); desenharTudo(); }
+  if(n==="painel"){ renderChips(); renderConstancia(); renderProximaAcao(); desenharTudo(); }
 }
 function atualizarTudo(){
   const d=hoje(), min=minutosDoDia(d), meta=metaDoDia(d)*60;
@@ -2377,7 +3423,10 @@ function atualizarTudo(){
   document.getElementById("n-questoes").textContent=db.questoes.length;
   const dd=new Date(d+"T12:00:00");
   atualizarSino();
+  atualizarBase();
+  renderProximaAcao();
   document.getElementById("cabecalho").textContent=dd.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})+(meta?"":" · descanso");
+  renderConstancia();
   desenharTudo();
 }
 
@@ -2385,6 +3434,21 @@ carregar();
 document.getElementById("data").value=hoje();
 document.getElementById("apiKey").value=db.apiKey||"";
 document.getElementById("apiModel").value=db.apiModel||"gemini-flash-lite-latest";
+/* qualquer elemento clicável dá retorno visual imediato */
+document.addEventListener("click", (ev)=>{
+  const alvo = ev.target.closest("button, .chip, .bt, .wz-op, .menu-item");
+  if(!alvo) return;
+  alvo.classList.add("tocado");
+  setTimeout(()=> alvo.classList.remove("tocado"), 170);
+}, true);
+
+window.addEventListener("error", (ev)=>{
+  try{ toast("Algo falhou: " + (ev.message || "erro"), "err"); }catch(e){}
+});
+window.addEventListener("unhandledrejection", (ev)=>{
+  try{ toast("Falha de conexão: " + ((ev.reason && ev.reason.message) || "tente de novo"), "err"); }catch(e){}
+});
+
 carregarCronometro();
 ajustarAlturaHeader();
 setTimeout(()=>{
