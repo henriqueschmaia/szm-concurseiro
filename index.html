@@ -830,7 +830,7 @@ const ROTINA_PADRAO = {
 let db = { sessoes:[], questoes:[], edital:{texto:"",disciplinas:[]},
            pesos:{}, planos:[], ativoId:null, apiKey:"", apiModel:"gemini-flash-lite-latest",
            avisos:[], planoInicio:null, cacheBuscas:{}, webStatus:"desconhecido", dificuldade:{},
-           metaDisciplina:{}, revisoes:[], versao:"v72",
+           metaDisciplina:{}, revisoes:[], versao:"v74",
            rotina: Object.assign({},ROTINA_PADRAO) };
 
 function carregar(){
@@ -4451,7 +4451,7 @@ function wzSalvarRotina(){
     toast("Sua rotina não deixa horas livres — revise as folgas", "err");
     return;
   }
-  wzIr(4);
+  wzIr(5);   // rotina é o passo 4; o próximo é a data da prova
 }
 
 /* ---------- passo 3: prova ---------- */
@@ -4760,9 +4760,13 @@ function rebalancear(){
     alvo += (p.ciclo[dow(x)] || []).reduce((a,b)=>a + b.horas, 0);
   if(alvo <= 0){ toast("Não há horas restantes no plano", "err"); return; }
   const ciclo = montarCiclo(inicio, true);
-  const novo = {id:uid(), nome:(nomeEscolhido() || (p.nome.replace(/ \(.*\)$/,"")+" · recálculo")),
+  // reaproveita o plano de recálculo anterior em vez de criar um novo a cada clique
+  const anterior = db.planos.find(x=> x.origem === "rebalanceado");
+  const alvoId = anterior ? anterior.id : uid();
+  const novo = {id:alvoId, nome:(nomeEscolhido() || (p.nome.replace(/ \(.*\)$/,"")+" · recálculo")),
     inicio, fim:p.fim, dias:Math.round((new Date(p.fim)-new Date(inicio))/86400000)+1,
     horasSemana:horasSemana(inicio), ciclo, origem:"rebalanceado", criado:new Date().toISOString()};
+  db.planos = db.planos.filter(x=> x.origem !== "rebalanceado");
   db.planos.push(novo); db.ativoId = novo.id; salvar();
   renderChips(); renderListaPlanos(); renderHoje(); renderSaldo(); renderSemana(); desenharTudo();
   toast("Plano redistribuído a partir de hoje", "ok");

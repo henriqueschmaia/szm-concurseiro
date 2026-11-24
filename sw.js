@@ -1,5 +1,5 @@
 ﻿/* Service worker do SZM Concurseiro â€” offline + atualizaÃ§Ã£o automÃ¡tica */
-const CACHE = "szm-v72";
+const CACHE = "szm-v74";
 const SHELL = [
   "./",
   "./index.html",
@@ -80,6 +80,8 @@ self.addEventListener("fetch", (evento) => {
     })
   );
 });
+
+
 
 
 
