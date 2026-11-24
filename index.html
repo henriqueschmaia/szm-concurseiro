@@ -140,6 +140,18 @@
   .resumo-plano b{color:#0A2240;font-size:12.5px}
   .resumo-plano div{font-size:11.5px;color:#3D5A73;margin-top:3px}
   .wizard{position:fixed;inset:0;background:#F2F7FB;z-index:95;display:flex;flex-direction:column}
+  /* fim de sessão */
+  .grade2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{border:1px solid var(--linha);background:#fff;border-radius:999px;padding:6px 11px;font:inherit;
+        font-size:11.5px;font-weight:600;color:var(--ink);cursor:pointer;max-width:100%;overflow:hidden;
+        text-overflow:ellipsis;white-space:nowrap}
+  .chip:active{transform:scale(.97)}
+  .chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .campo{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .campo label{font-size:10.5px;font-weight:700;color:var(--ink-2);letter-spacing:.02em}
+  #painelFim input,#painelFim select{width:100%;font-size:13px;padding:9px}
+  #painelFim .campo input{text-align:center;font-weight:700}
   .wizard.oculto{display:none !important}
   .wz-topo{background:linear-gradient(135deg,#0A2240,#14325C);color:#fff;padding:14px 16px 12px}
   .wz-topo .linha-topo{display:flex;align-items:center;justify-content:space-between}
@@ -193,6 +205,8 @@
   @keyframes gira{to{transform:rotate(360deg)}}
   /* campos com foco evidente */
   input:focus, select:focus, textarea:focus{outline:2px solid var(--teal);outline-offset:1px}
+  button:focus-visible, a:focus-visible, [tabindex]:focus-visible{
+    outline:3px solid var(--teal); outline-offset:2px; border-radius:10px}
   .toasts{position:fixed;left:0;right:0;bottom:88px;display:flex;flex-direction:column;
           align-items:center;gap:7px;z-index:80;pointer-events:none;padding:0 12px}
   .toast{background:#0A2240;color:#fff;padding:11px 17px;border-radius:99px;font-size:12.5px;
@@ -302,7 +316,8 @@
   .linha label{min-width:0}
   .linha label{font-size:13px; color:var(--ink-2)}
   /* ---------- navegação (zona do polegar) ---------- */
-  nav{height:64px; padding-bottom:env(safe-area-inset-bottom)}
+  nav{min-height:64px; height:auto; box-sizing:border-box;
+      padding-bottom:calc(6px + env(safe-area-inset-bottom))}
   nav button{font-size:10px; font-weight:700; gap:2px; letter-spacing:.01em}
   nav button span{font-size:19px}
   nav button.on span{width:36px; height:36px; line-height:36px}
@@ -378,6 +393,47 @@
   </div>
   <div class="wz-corpo" id="wz-corpo"></div>
   <div class="wz-rodape" id="wz-rodape"></div>
+</div>
+
+<div id="painelOcr" class="overlay oculto" onclick="event.stopPropagation()">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-topo">
+      <h3>Lendo o PDF como imagem</h3>
+      <button onclick="cancelarOcr()" aria-label="Cancelar">✕</button>
+    </div>
+    <p class="sub" id="ocr-sub">Este PDF não tem texto selecionável (é digitalizado). Vou tentar reconhecer por OCR.</p>
+    <div class="barra" style="margin:10px 0"><span id="ocr-barra" style="width:0%"></span></div>
+    <div class="mini" id="ocr-info">preparando…</div>
+    <div class="mini" style="margin-top:10px;color:#8A6D2C">
+      O OCR depende de internet na primeira vez (baixa o motor de reconhecimento) e pode levar
+      alguns segundos por página. Você pode cancelar e colar o texto manualmente.</div>
+    <button class="btn sec mini" style="width:100%;margin-top:10px" onclick="cancelarOcr()">Cancelar</button>
+  </div>
+</div>
+
+<div id="painelFim" class="overlay oculto" onclick="fecharFimSessao(event)"
+     onkeydown="if(event.key==='Escape'){fecharFimSessao();}">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-topo">
+      <h3 id="fim-titulo">Sessão concluída</h3>
+      <button onclick="fecharFimSessao()" aria-label="Fechar">✕</button>
+    </div>
+    <p class="sub" id="fim-sub" style="margin:0 0 10px"></p>
+
+    <div class="mini" style="margin-bottom:4px"><b>O que você estudou?</b></div>
+    <div id="fim-chips" class="chips" style="margin-bottom:6px"></div>
+    <select id="fim-topico" style="width:100%;margin-bottom:10px"
+            onchange="marcarChipAtivo()"></select>
+
+    <div class="mini" style="margin-bottom:4px"><b>Questões que fez</b> <span style="color:#6B7280">(opcional)</span></div>
+    <div class="grade2">
+      <div class="campo"><label>Total</label><input type="number" id="fim-total" min="0" placeholder="0" inputmode="numeric"></div>
+      <div class="campo"><label>Acertos</label><input type="number" id="fim-acertos" min="0" placeholder="0" inputmode="numeric" oninput="limitarAcertos(this)"></div>
+    </div>
+
+    <button class="btn principal" style="width:100%;margin-top:6px" onclick="salvarFimSessao()">Salvar sessão</button>
+    <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="salvarFimSessao(true)">Só registrar o tempo</button>
+  </div>
 </div>
 
 <div id="painelEditor" class="overlay oculto" onclick="fecharEditor(event)">
@@ -751,8 +807,9 @@ const PADRAO = {
   "Direitos Humanos":["Dignidade e igualdade","Proteção internacional","Acesso à justiça","Grupos vulneráveis","Políticas judiciárias"]
 };
 
-const FERIADOS = ["2026-11-24","2026-12-24","2026-12-25","2026-12-31","2027-01-01",
-  "2027-02-08","2027-02-09","2027-02-10","2027-03-26","2027-04-21","2027-05-01"];
+/* feriados/folgas nacionais no período de estudo (editável) */
+const FERIADOS = ["2026-11-02","2026-11-15","2026-11-20","2026-12-24","2026-12-25","2026-12-31",
+  "2027-01-01","2027-02-08","2027-02-09","2027-03-26","2027-04-21","2027-05-01"];
 const NOMES_DIA = ["dom","seg","ter","qua","qui","sex","sáb"];
 const CHAVE="tjsc_app_v4";
 
@@ -767,11 +824,21 @@ const ROTINA_PADRAO = {
 let db = { sessoes:[], questoes:[], edital:{texto:"",disciplinas:[]},
            pesos:{}, planos:[], ativoId:null, apiKey:"", apiModel:"gemini-flash-lite-latest",
            avisos:[], planoInicio:null, cacheBuscas:{}, webStatus:"desconhecido", dificuldade:{},
-           metaDisciplina:{}, revisoes:[], versao:"v56",
+           metaDisciplina:{}, revisoes:[], versao:"v66",
            rotina: Object.assign({},ROTINA_PADRAO) };
 
 function carregar(){
-  try{ const t=localStorage.getItem(CHAVE); if(t) db=Object.assign(db,JSON.parse(t)); }catch(e){}
+  try{
+    const t = localStorage.getItem(CHAVE);
+    if(t){
+      const lido = JSON.parse(t);
+      if(lido && typeof lido === "object" && !Array.isArray(lido)) db = Object.assign(db, lido);
+      else throw new Error("formato inesperado");
+    }
+  }catch(e){
+    try{ localStorage.setItem(CHAVE + "_corrompido", localStorage.getItem(CHAVE) || ""); }catch(x){}
+    toast("Seus dados estavam corrompidos — comecei vazio e guardei uma cópia", "err");
+  }
   db.sessoes=db.sessoes||[]; db.questoes=db.questoes||[]; db.planos=db.planos||[];
   db.edital=db.edital||{texto:"",disciplinas:[]};
   db.rotina=Object.assign({},ROTINA_PADRAO,db.rotina||{});
@@ -798,6 +865,14 @@ function toast(msg, tipo){
 
 let avisoArmazenamento = false;
 function salvar(){
+  // tópicos sempre sem numeração ("1. ", "2.1 ")
+  try{
+    if(db.edital && Array.isArray(db.edital.disciplinas)){
+      db.edital.disciplinas.forEach(d=>{
+        if(d && Array.isArray(d.topicos)) d.topicos = d.topicos.map(tituloTopico).filter(Boolean);
+      });
+    }
+  }catch(e){}
   try{
     localStorage.setItem(CHAVE, JSON.stringify(db));
   }catch(e){
@@ -871,6 +946,10 @@ function disponibilidade(){
     const TETO_DIA = 6;   // teto realista de estudo por dia
     out[d] = Math.max(0, Math.min(TETO_DIA, +livre.toFixed(1)));
   }
+  // dia de folga escolhido pelo usuário não recebe estudo
+  if(r.configurada && Array.isArray(r.folgas)){
+    r.folgas.forEach(f=>{ if(f >= 0 && f < 7) out[f] = 0; });
+  }
   return out;
 }
 function emFeriasTrab(d){
@@ -929,7 +1008,11 @@ function horasSemana(inicio){
 /* ============================================================ CRONÔMETRO */
 const estado={}; let ativoNome=null;
 function nomesMaterias(){ return disciplinas().map(d=>d.nome); }
-function garantirEstado(){ nomesMaterias().forEach(n=>{ if(!estado[n]) estado[n]={seg:0,rodando:false,marca:0}; }); }
+function garantirEstado(){
+  const validos = nomesMaterias();
+  Object.keys(estado).forEach(n=>{ if(!validos.includes(n)) delete estado[n]; });
+  validos.forEach(n=>{ if(!estado[n]) estado[n]={seg:0,rodando:false,marca:0}; });
+}
 function renderMaterias(){
   garantirEstado();
   const lista = nomesMaterias();
@@ -945,8 +1028,10 @@ function renderMaterias(){
     const e=estado[m];
     return `<div class="mat ${ativoNome===m?'run':''}">
       <span class="nome">${m}</span><span class="tempo" id="t${i}">00:00:00</span>
-      <button class="bt ${e.rodando?'pause':'play'}" onclick="alternar('${m.replace(/'/g,"\\'")}')">${e.rodando?'⏸':'▶'}</button>
-      <button class="bt stop" onclick="encerrar('${m.replace(/'/g,"\\'")}')">⏹</button></div>`;
+      <button class="bt ${e.rodando?'pause':'play'}" aria-label="${e.rodando?'Pausar':'Iniciar'} ${m}"
+        onclick="alternar('${m.replace(/'/g,"\\'")}')">${e.rodando?'⏸':'▶'}</button>
+      <button class="bt stop" aria-label="Encerrar e registrar ${m}"
+        onclick="encerrar('${m.replace(/'/g,"\\'")}')">⏹</button></div>`;
   }).join("");
 }
 function alternar(m){
@@ -956,15 +1041,134 @@ function alternar(m){
         e.marca=Date.now(); e.rodando=true; ativoNome=m; }
   renderMaterias();
 }
+let FIM = null;   // sessão aguardando confirmação
 function encerrar(m){
   const e=estado[m];
-  if(e.rodando){ e.seg+=(Date.now()-e.marca)/1000; e.rodando=false; }
+  if(e.rodando){ e.seg+=(Date.now()-e.marca)/1000; e.rodando=false; ativoNome=null; }
   const seg=e.seg;
-  if(seg<30){ if(seg>0&&confirm("Menos de 30 segundos. Descartar?")) resetar(m); return; }
-  const min=Math.max(1,Math.round(seg/60));
-  db.sessoes.push({data:hoje(),materia:m,minutos:min,quando:new Date().toISOString()});
-  salvar(); resetar(m); atualizarTudo(); salvarCronometro();
-  toast("Sessão registrada: +"+min+" min de "+m, "ok");
+  if(seg < 30){
+    if(seg > 0 && confirm("Menos de 30 segundos. Descartar?")) resetar(m);
+    else renderMaterias();
+    return;
+  }
+  abrirFimSessao(m, Math.max(1, Math.round(seg/60)));
+}
+/* memória de tópicos: últimos e mais usados por matéria */
+function guardarTopico(materia, topico){
+  if(!materia || !topico) return;
+  db.ultimoTopico = db.ultimoTopico || {};
+  db.topicoUso = db.topicoUso || {};
+  db.ultimoTopico[materia] = topico;
+  if(!db.topicoUso[materia]) db.topicoUso[materia] = {};
+  db.topicoUso[materia][topico] = (db.topicoUso[materia][topico] || 0) + 1;
+}
+function topicosRecentes(materia){
+  const uso = (db.topicoUso && db.topicoUso[materia]) || {};
+  const ordenados = Object.entries(uso).sort((a,b)=> b[1]-a[1]).map(([t])=>t);
+  const ultimo = (db.ultimoTopico && db.ultimoTopico[materia]) || "";
+  const lista = [];
+  if(ultimo) lista.push(ultimo);
+  ordenados.forEach(x=>{ if(lista.indexOf(x) < 0) lista.push(x); });
+  return lista.slice(0, 3);
+}
+function abrirFimSessao(materia, minutos){
+  FIM = {materia, minutos};
+  const h = Math.floor(minutos/60), mi = minutos%60;
+  const tempo = h ? `${h} h ${mi ? mi + " min" : ""}`.trim() : `${mi} min`;
+  document.getElementById("fim-titulo").textContent = "Sessão concluída";
+  document.getElementById("fim-sub").innerHTML =
+    `<b>${tempo}</b> de <b>${materia}</b>. Marque o que você estudou e quantas questões fez.`;
+  const topicos = topicosDe(materia);
+  const sel = document.getElementById("fim-topico");
+  sel.innerHTML = `<option value="">Todos os tópicos / não especificar</option>` +
+    topicos.map(x=>{
+      const curto = tituloTopico(x);
+      const label = curto.length > 60 ? curto.slice(0, 60).trim() + "…" : curto;
+      return `<option value="${String(x).replace(/"/g,"&quot;")}">${label}</option>`;
+    }).join("");
+
+  // já seleciona o último tópico estudado desta matéria
+  const ultimo = (db.ultimoTopico && db.ultimoTopico[materia]) || "";
+  if(ultimo && topicos.includes(ultimo)) sel.value = ultimo;
+
+  // atalhos com os tópicos mais usados
+  const recentes = topicosRecentes(materia).filter(x=> topicos.includes(x));
+  const boxChips = document.getElementById("fim-chips");
+  if(boxChips){
+    boxChips.innerHTML = recentes.map(x=>{
+      const curto = tituloTopico(x);
+      const label = curto.length > 26 ? curto.slice(0, 26).trim() + "…" : curto;
+      return `<button class="chip${sel.value === x ? " on" : ""}" data-top="${String(x).replace(/"/g,"&quot;")}"
+        title="${String(curto).replace(/"/g,"&quot;")}" onclick="escolherChip(this)">${label}</button>`;
+    }).join("");
+  }
+  marcarChipAtivo();
+
+  document.getElementById("fim-total").value = "";
+  document.getElementById("fim-acertos").value = "";
+  document.getElementById("painelFim").classList.remove("oculto");
+  setTimeout(()=>{
+    const foco = document.getElementById("fim-total");
+    if(foco) foco.focus();
+  }, 150);
+}
+function limitarAcertos(el){
+  const total = parseInt(document.getElementById("fim-total").value || "0", 10) || 0;
+  const ac = parseInt(el.value || "0", 10) || 0;
+  if(ac > total) el.value = total;
+  if(ac < 0) el.value = 0;
+}
+function escolherChip(btn){
+  const sel = document.getElementById("fim-topico");
+  if(!sel || !btn) return;
+  sel.value = btn.getAttribute("data-top") || "";
+  marcarChipAtivo();
+}
+function marcarChipAtivo(){
+  const sel = document.getElementById("fim-topico");
+  const atual = sel ? sel.value : "";
+  document.querySelectorAll("#fim-chips .chip").forEach(c=>{
+    c.classList.toggle("on", (c.getAttribute("data-top")||"") === atual);
+  });
+}
+function fecharFimSessao(ev){
+  const el = document.getElementById("painelFim");
+  if(ev && ev.target !== el) return;
+  if(el) el.classList.add("oculto");
+  if(FIM) renderMaterias();
+  FIM = null;
+}
+function salvarFimSessao(soTempo){
+  if(!FIM || FIM.salvando) return;
+  FIM.salvando = true;
+  const {materia, minutos} = FIM;
+  const topico = document.getElementById("fim-topico").value || "";
+  const total = parseInt(document.getElementById("fim-total").value || "0", 10) || 0;
+  const acertos = parseInt(document.getElementById("fim-acertos").value || "0", 10) || 0;
+
+  db.sessoes.push({data:hoje(), materia, minutos, topico, quando:new Date().toISOString()});
+  let msg = "+" + minutos + " min de " + materia;
+
+  if(!soTempo && total > 0){
+    const ac = Math.min(acertos, total);
+    db.questoes.push({
+      data: hoje(), materia,
+      assunto: topico || (topicosDe(materia)[0] || materia),
+      total, acertos: ac
+    });
+    msg += " · " + ac + "/" + total + " questões";
+    if(ac < total) agendarRevisao(materia, topico || "", 1);
+  } else if(topico){
+    agendarRevisao(materia, topico, 1);
+  }
+
+  if(topico) guardarTopico(materia, topico);
+
+  salvar();
+  document.getElementById("painelFim").classList.add("oculto");
+  resetar(materia); atualizarTudo(); salvarCronometro();
+  toast("Registrado: " + msg, "ok");
+  FIM = null;
 }
 function resetar(m){ estado[m]={seg:0,rodando:false,marca:0}; ativoNome=null; salvarCronometro(); renderMaterias(); }
 
@@ -991,7 +1195,13 @@ function carregarCronometro(){
     estado[n].seg=seg;
   });
 }
+document.addEventListener("visibilitychange", ()=>{
+  if(document.hidden) return;
+  // voltou ao app: redesenha relógios e dados (o tempo é calculado por timestamp)
+  try{ renderMaterias(); atualizarTudo(); }catch(e){}
+});
 setInterval(()=>{
+  if(document.hidden) return;   // economiza bateria; ao voltar, recalcula
   nomesMaterias().forEach((m,i)=>{
     const e=estado[m]; if(!e) return;
     let s=e.seg+(e.rodando?(Date.now()-e.marca)/1000:0);
@@ -1043,7 +1253,10 @@ function popularSelects(){
 function tituloTopico(s){
   return String(s||"").replace(/^\s*\d{1,2}(?:\.\d{1,2})*\s*[\.\)]?\s*/,"").trim();
 }
-function topicosDe(m){ const d=disciplinas().find(x=>x.nome===m); return d?d.topicos:[]; }
+function topicosDe(m){
+  const d = disciplinas().find(x=>x.nome===m);
+  return d ? d.topicos.map(tituloTopico) : [];
+}
 function atualizarSelectAssuntos(){
   document.getElementById("q-assunto").innerHTML=topicosDe(document.getElementById("q-materia").value).map(t=>`<option>${t}</option>`).join("");
 }
@@ -1325,7 +1538,8 @@ async function extrairComPdfJS(buffer){
     window.__pdfjs.GlobalWorkerOptions.workerSrc = "./pdf.worker.min.mjs";
   }
   const lib = window.__pdfjs;
-  const doc = await lib.getDocument({ data: new Uint8Array(buffer) }).promise;
+  // cópia: o pdf.js transfere o buffer para o worker e o original fica inutilizável
+  const doc = await lib.getDocument({ data: new Uint8Array(buffer.slice(0)) }).promise;
   let texto = "";
   for(let i=1; i<=doc.numPages; i++){
     const pagina = await doc.getPage(i);
@@ -1334,6 +1548,115 @@ async function extrairComPdfJS(buffer){
     if(texto.length > 500000) break;
   }
   return texto.replace(/[ \t]{2,}/g," ").replace(/\n{3,}/g,"\n\n").trim();
+}
+
+/* ============================================================ OCR (PDF escaneado) */
+const OCR_CDN = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+let __ocrPromessa = null;
+let OCR_CANCELADO = false;
+
+function carregarTesseract(){
+  if(window.Tesseract) return Promise.resolve(window.Tesseract);
+  if(__ocrPromessa) return __ocrPromessa;
+  __ocrPromessa = new Promise((ok, erro)=>{
+    const s = document.createElement("script");
+    s.src = OCR_CDN;
+    s.async = true;
+    // se a rede travar, não deixa a folha aberta para sempre
+    const prazo = setTimeout(()=>{
+      __ocrPromessa = null;
+      try{ s.remove(); }catch(x){}
+      erro(new Error("o OCR demorou para carregar (internet lenta?)"));
+    }, 15000);
+    s.onload = ()=>{
+      clearTimeout(prazo);
+      window.Tesseract ? ok(window.Tesseract) : erro(new Error("OCR não carregou"));
+    };
+    s.onerror = ()=>{
+      clearTimeout(prazo);
+      __ocrPromessa = null;
+      erro(new Error("sem internet para baixar o OCR"));
+    };
+    document.head.appendChild(s);
+  });
+  return __ocrPromessa;
+}
+
+async function ocrPDF(buffer, aoProgresso){
+  const lib = window.__pdfjs || (window.__pdfjs = await import("./pdf.min.mjs"));
+  lib.GlobalWorkerOptions.workerSrc = "./pdf.worker.min.mjs";
+  const doc = await lib.getDocument({ data: new Uint8Array(buffer.slice(0)) }).promise;
+  const T = await carregarTesseract();
+
+  const total = Math.min(doc.numPages, 40);   // teto de páginas para não virar eternidade
+  let texto = "";
+  for(let i=1; i<=total; i++){
+    if(OCR_CANCELADO) break;
+    if(aoProgresso) aoProgresso(i, total);
+    const pagina = await doc.getPage(i);
+    const viewport = pagina.getViewport({ scale: 2 });
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(viewport.width);
+    canvas.height = Math.round(viewport.height);
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    await pagina.render({ canvasContext: ctx, viewport }).promise;
+    try{
+      const r = await T.recognize(canvas, "por");
+      texto += ((r && r.data && r.data.text) || "") + "\n";
+    }catch(e){ /* segue para a próxima página */ }
+    canvas.width = canvas.height = 0;   // libera memória
+  }
+  return texto.replace(/[ \t]{2,}/g," ").replace(/\n{3,}/g,"\n\n").trim();
+}
+
+function abrirOcr(buffer, nomeArquivo){
+  __ultimoPdf = buffer;
+  OCR_CANCELADO = false;
+  const el = document.getElementById("painelOcr");
+  const info = document.getElementById("ocr-info");
+  const barra = document.getElementById("ocr-barra");
+  if(el) el.classList.remove("oculto");
+  if(info) info.textContent = "preparando…";
+  if(barra) barra.style.width = "0%";
+
+  ocrPDF(buffer, (i, total)=>{
+    if(info) info.textContent = "página " + i + " de " + total;
+    if(barra) barra.style.width = Math.round(i/total*100) + "%";
+  }).then(texto=>{
+    if(el) el.classList.add("oculto");
+    if(OCR_CANCELADO){ toast("OCR cancelado", "info"); return; }
+    if(!texto || texto.length < 120){
+      toast("O OCR não conseguiu ler este arquivo", "err");
+      wzIr(1);
+      return;
+    }
+    WZ.textoEdital = texto;
+    toast("OCR concluído: " + texto.length + " caracteres", "ok");
+    if(db.apiKey) wzVarrerTudo();
+    else wzDetectarCargos();
+  }).catch(e=>{
+    if(el) el.classList.add("oculto");
+    toast("OCR indisponível: " + e.message, "err");
+    const c = document.getElementById("wz-corpo");
+    if(c) c.innerHTML = `<h4>Não consegui ler este PDF</h4>
+      <p class="sub">${e.message}</p>
+      <p class="sub">Alternativas: tentar de novo (se a internet oscilou), colar o texto do anexo,
+      ou usar o edital em outro formato.</p>`;
+    wzRodape(`<button class="btn principal" style="width:100%" onclick="repetirOcr()">Tentar de novo</button>
+      <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="wzEscolherFonte('colar')">Colar o texto</button>
+      <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="wzIr(1)">Voltar</button>`);
+  });
+}
+
+let __ultimoPdf = null;
+function repetirOcr(){
+  if(!__ultimoPdf){ toast("Anexe o arquivo novamente", "info"); wzIr(1); return; }
+  abrirOcr(__ultimoPdf, "edital.pdf");
+}
+function cancelarOcr(){
+  OCR_CANCELADO = true;
+  const el = document.getElementById("painelOcr");
+  if(el) el.classList.add("oculto");
 }
 
 /* extrator mínimo de texto de PDF, roda no próprio aparelho */
@@ -2509,6 +2832,22 @@ ${blocos[i]}`;
   return {cargos, falhas, blocos: blocos.length};
 }
 
+/* ============================================================ PROMPT DE CARGO (compartilhado) */
+/* usado tanto no assistente quanto na aba Plano — mantém a saída igual nos dois fluxos */
+function promptDoCargo(bloco){
+  return `Abaixo está o conteúdo programático de UM cargo de um concurso público brasileiro.
+Liste todas as disciplinas e, para cada uma, os tópicos.
+Responda APENAS com JSON:
+{"disciplinas":[{"nome":"","topicos":["",""],"questoes":0,"peso":1}]}
+Regras:
+- nomes exatos das disciplinas; TODOS os tópicos numerados; não invente;
+- "questoes" = quantas questões desta disciplina caem na prova (procure a tabela
+  "distribuição das questões por disciplina" no edital; use 0 se não encontrar);
+- "peso" = multiplicador da disciplina, se o edital indicar (senão 1).
+TEXTO:
+${bloco}`;
+}
+
 /* ============================================================ CARGOS: RESERVA POR IA */
 async function detectarCargosComIA(texto){
   if(!db.apiKey) return [];
@@ -2762,17 +3101,7 @@ async function _processarCargo(i){
   let disc = null, origem = "";
 
   if(db.apiKey && !_cancelarCargo){
-    const prompt = `Abaixo está o conteúdo programático de UM cargo de um concurso público brasileiro.
-Liste todas as disciplinas e, para cada uma, os tópicos.
-Responda APENAS com JSON:
-{"disciplinas":[{"nome":"","topicos":["",""],"questoes":0,"peso":1}]}
-Regras:
-- nomes exatos das disciplinas; TODOS os tópicos numerados; não invente;
-- "questoes" = quantas questões desta disciplina caem na prova (procure a tabela
-  "distribuição das questões por disciplina" no edital; use 0 se não encontrar);
-- "peso" = multiplicador da disciplina, se o edital indicar (senão 1).
-TEXTO:
-${bloco}`;
+    const prompt = promptDoCargo(bloco);
     try{
       const obj = await chamarUmaVez(prompt, 4096, 12000);
       disc = (obj.disciplinas || []).filter(d=> d && d.nome && (d.topicos||[]).length)
@@ -3620,8 +3949,10 @@ function wzPasso1(c){
       <span class="em">📚</span><span class="tx"><b>Escolher da lista de prontos</b><span>concursos já processados, carrega na hora</span></span></button>
     <button class="wz-op" onclick="wzEscolherFonte('web')">
       <span class="em">🔍</span><span class="tx"><b>Não tenho — procurar na internet</b><span>buscar o concurso</span></span></button>
+    <button class="wz-op" onclick="wzEscolherFonte('manual')">
+      <span class="em">✍️</span><span class="tx"><b>Montar sem edital</b><span>escrevo minhas matérias e tópicos</span></span></button>
     <button class="wz-op" onclick="wzEscolherFonte('sem')">
-      <span class="em">⚡</span><span class="tx"><b>Montar sem edital</b><span>uso uma lista padrão de disciplinas</span></span></button>`;
+      <span class="em">⚡</span><span class="tx"><b>Usar lista padrão</b><span>11 disciplinas prontas, para começar rápido</span></span></button>`;
   wzRodape("");
 }
 function wzEscolherFonte(fonte){
@@ -3639,7 +3970,11 @@ function wzEscolherFonte(fonte){
         try{ texto = await extrairComPdfJS(buf); }catch(e){ texto = await extrairTextoPDF(buf); }
         texto = (texto || "").trim();
         input.value = "";
-        if(texto.length < 200){ toast("Não consegui ler o PDF", "err"); wzIr(1); return; }
+        if(texto.length < 200){
+          // PDF digitalizado: tenta OCR automaticamente
+          abrirOcr(buf, arq.name);
+          return;
+        }
         WZ.textoEdital = texto;
         if(db.apiKey) wzVarrerTudo();
         else wzDetectarCargos();
@@ -3670,6 +4005,7 @@ function wzEscolherFonte(fonte){
     toast("Busque o concurso e volte pelo botão Montar meu plano", "info");
     return;
   }
+  if(fonte === "manual"){ wizardManual(); return; }
   // sem edital: usa o padrao
   db.edital = {texto:"", disciplinas: disciplinasPadrao(), nome:"Plano padrão"};
   db.pesos = {};
@@ -3677,6 +4013,58 @@ function wzEscolherFonte(fonte){
   salvar(); renderPesos(); renderMaterias(); popularSelects();
   WZ.disciplinas = db.edital.disciplinas;
   toast("Usei a lista padrão de 11 disciplinas", "info");
+  wzIr(2);
+}
+
+/* ============================================================ ASSISTENTE: MATÉRIAS MANUAIS */
+function wizardManual(){
+  WZ.modo = "manual";
+  WZ.manual = (WZ.manual && WZ.manual.length) ? WZ.manual : [{nome:"", topicos:""}];
+  renderManual();
+}
+function renderManual(){
+  const c = document.getElementById("wz-corpo");
+  const linhas = WZ.manual.map((d,i)=>`
+    <div class="card" style="padding:10px;margin-bottom:8px">
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="text" id="man-nome-${i}" value="${(d.nome||"").replace(/"/g,"&quot;")}"
+               placeholder="Nome da matéria (ex.: Direito Civil)" oninput="WZ.manual[${i}].nome=this.value"
+               style="flex:1">
+        <button class="btn sec mini" style="padding:6px 10px" onclick="removerManual(${i})" aria-label="Remover">✕</button>
+      </div>
+      <textarea id="man-top-${i}" placeholder="Tópicos, um por linha (opcional)" oninput="WZ.manual[${i}].topicos=this.value; contarManual(${i}, this.value)"
+        style="margin-top:6px;min-height:64px;font-size:12px">${(d.topicos||"").replace(/</g,"&lt;")}</textarea>
+      <div class="mini" id="man-conta-${i}" style="margin-top:4px">${(String(d.topicos||"").split("\n").filter(x=>x.trim()).length)} tópico(s)</div>
+    </div>`).join("");
+
+  c.innerHTML = `<h4>Suas matérias</h4>
+    <p class="sub">Escreva as matérias e, se quiser, os tópicos de cada uma. Depois eu monto o plano.</p>
+    ${linhas}
+    <button class="btn sec mini" style="width:100%" onclick="adicionarManual()">＋ Adicionar matéria</button>`;
+
+  wzRodape(`<button class="btn principal" style="width:100%" onclick="salvarManual()">Continuar</button>
+    <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="wzIr(1)">Voltar</button>`);
+}
+function contarManual(i, valor){
+  const el = document.getElementById("man-conta-" + i);
+  if(el) el.textContent = String(valor||"").split("\n").filter(x=>x.trim()).length + " tópico(s)";
+}
+function adicionarManual(){ WZ.manual.push({nome:"", topicos:""}); renderManual(); }
+function removerManual(i){ WZ.manual.splice(i,1); if(!WZ.manual.length) WZ.manual=[{nome:"",topicos:""}]; renderManual(); }
+function salvarManual(){
+  const disc = WZ.manual
+    .map(d=>({ nome: String(d.nome||"").trim().slice(0,60),
+               topicos: String(d.topicos||"").split("\n").map(x=>x.trim()).filter(Boolean).map(tituloTopico) }))
+    .filter(d=> d.nome);
+  if(!disc.length){ toast("Escreva pelo menos o nome de uma matéria", "err"); return; }
+  db.edital = { texto:"", disciplinas: disc, nome: "Plano pessoal" };
+  db.pesos = {};
+  disc.forEach(d=> db.pesos[d.nome] = Math.max(1, d.topicos.length));
+  const campo = document.getElementById("p-nome");
+  if(campo) campo.value = "Plano pessoal";
+  salvar(); renderPesos(); renderMaterias(); popularSelects();
+  WZ.disciplinas = disc;
+  toast(disc.length + " matéria(s) criada(s)", "ok");
   wzIr(2);
 }
 function wzColar(){
@@ -3801,17 +4189,7 @@ async function _wzEscolherCargo(i){
   let disc = null, origem = "";
 
   if(db.apiKey){
-    const prompt = `Abaixo está o conteúdo programático de UM cargo de um concurso público brasileiro.
-Liste todas as disciplinas e, para cada uma, os tópicos.
-Responda APENAS com JSON:
-{"disciplinas":[{"nome":"","topicos":["",""],"questoes":0,"peso":1}]}
-Regras:
-- nomes exatos das disciplinas; TODOS os tópicos numerados; não invente;
-- "questoes" = quantas questões desta disciplina caem na prova (procure a tabela
-  "distribuição das questões por disciplina" no edital; use 0 se não encontrar);
-- "peso" = multiplicador da disciplina, se o edital indicar (senão 1).
-TEXTO:
-${bloco}`;
+    const prompt = promptDoCargo(bloco);
     try{
       const obj = await chamarUmaVez(prompt, 4096, 12000);
       disc = (obj.disciplinas || []).filter(d=> d && d.nome && (d.topicos||[]).length)

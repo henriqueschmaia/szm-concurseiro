@@ -1,5 +1,5 @@
 ﻿/* Service worker do SZM Concurseiro â€” offline + atualizaÃ§Ã£o automÃ¡tica */
-const CACHE = "szm-v56";
+const CACHE = "szm-v66";
 const SHELL = [
   "./",
   "./index.html",
@@ -56,9 +56,17 @@ self.addEventListener("fetch", (evento) => {
     return;
   }
 
+  // URLs com "?t=" são cache-busting dos dados (catálogo) — não entram no cache
+  if (url.search && /[?&]t=/.test(url.search)) {
+    evento.respondWith(
+      fetch(req).catch(() => caches.match(req, { ignoreSearch: true }))
+    );
+    return;
+  }
+
   // Demais arquivos: responde do cache e atualiza em segundo plano
   evento.respondWith(
-    caches.match(req).then((emCache) => {
+    caches.match(req, { ignoreSearch: true }).then((emCache) => {
       const daRede = fetch(req)
         .then((res) => {
           if (res && res.status === 200) {
@@ -72,6 +80,9 @@ self.addEventListener("fetch", (evento) => {
     })
   );
 });
+
+
+
 
 
 
