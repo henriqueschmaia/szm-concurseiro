@@ -1,0 +1,18 @@
+{
+  "atualizado": "2026-11-24",
+  "concursos": [
+    {
+      "id": "tjsc-tecnico-judiciario-auxiliar-2026",
+      "nome": "TJSC — Técnico Judiciário Auxiliar",
+      "orgao": "Tribunal de Justiça de Santa Catarina",
+      "ano": 2026,
+      "banca": "FGV",
+      "cargo": "Técnico Judiciário Auxiliar",
+      "prova": "2026-06-28",
+      "disciplinas": 11,
+      "topicos": 127,
+      "questoes": 80,
+      "arquivo": "tjsc-tecnico-judiciario-auxiliar-2026.json"
+    }
+  ]
+}

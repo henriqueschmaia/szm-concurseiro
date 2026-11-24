@@ -380,6 +380,20 @@
   <div class="wz-rodape" id="wz-rodape"></div>
 </div>
 
+<div id="painelEditor" class="overlay oculto" onclick="fecharEditor(event)">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-topo">
+      <h3>Matérias carregadas</h3>
+      <button onclick="fecharEditor()" aria-label="Fechar">✕</button>
+    </div>
+    <div class="mini" style="margin-bottom:10px">
+      Corrija o que estiver errado. Isso é o que o plano vai usar.</div>
+    <div id="editorLista"></div>
+    <button class="btn principal" style="width:100%;margin-top:10px" onclick="fecharEditor()">
+      Pronto</button>
+  </div>
+</div>
+
 <div id="painelMenu" class="overlay oculto" onclick="fecharMenu(event)">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="sheet-topo">
@@ -623,6 +637,14 @@
       </div>
 
       <div class="card">
+        <h2>Editais prontos</h2>
+        <div class="aviso">Concursos já processados: carrega as matérias na hora, sem gastar IA.</div>
+        <div id="listaCatalogo" class="mini">carregando…</div>
+        <button class="btn sec mini" style="width:100%;margin-top:8px" onclick="carregarCatalogo()">
+          ↻ Atualizar lista</button>
+      </div>
+
+      <div class="card">
         <h2>Buscar concursos</h2>
         <div class="aviso">A IA pesquisa na web e monta uma lista. Ela <b>não lê o PDF oficial</b> diretamente —
           resume o que os sites publicam, e pode errar datas. Confira as fontes em cada cartão.</div>
@@ -685,7 +707,10 @@
         <input type="file" id="arqPlano" accept=".json" class="oculto" onchange="importarPlano(this)">
       </div>
 
-      <div class="card"><h2>Disciplinas e pesos</h2><div id="pesos"></div></div>
+      <div class="card"><h2>Disciplinas e pesos</h2>
+        <button class="btn sec mini" style="width:100%;margin-bottom:8px" onclick="abrirEditor()">
+          ✎ Editar matérias carregadas</button>
+        <div id="pesos"></div></div>
 
       <div class="card">
         <h2>Dados</h2>
@@ -743,7 +768,7 @@ const ROTINA_PADRAO = {
 let db = { sessoes:[], questoes:[], edital:{texto:"",disciplinas:[]},
            pesos:{}, planos:[], ativoId:null, apiKey:"", apiModel:"gemini-flash-lite-latest",
            avisos:[], planoInicio:null, cacheBuscas:{}, webStatus:"desconhecido", dificuldade:{},
-           metaDisciplina:{}, revisoes:[], versao:"v43",
+           metaDisciplina:{}, revisoes:[], versao:"v48",
            rotina: Object.assign({},ROTINA_PADRAO) };
 
 function carregar(){
@@ -1914,6 +1939,14 @@ async function buscarConcursos(verificar){
   _buscando = true;
   try{ return await _buscarConcursos(verificar); } finally { _buscando = false; }
 }
+function renderListaConcursos(){
+  const box = document.getElementById("busca-resultado");
+  if(!box) return;
+  if(!listaConcursos.length){ box.innerHTML = ""; return; }
+  box.innerHTML = `<div class="mini" style="margin:2px 0 8px">${listaConcursos.length} concurso(s) encontrados — toque em "Usar este".</div>` +
+    listaConcursos.map((c,i)=> cartaoConcurso(c,i)).join("");
+}
+
 async function _buscarConcursos(verificar){
   const msg = document.getElementById("busca-msg");
   const box = document.getElementById("busca-resultado");
@@ -2078,6 +2111,160 @@ function usarConcurso(){
   const campoNome = document.getElementById("p-nome");
   if(campoNome && !campoNome.value) campoNome.value = rotulo;
   toast(`Aplicado: ${db.edital.disciplinas.length} disciplinas, ${total} submatérias`, "ok");
+}
+
+/* ============================================================ MESCLAGEM DE CARGOS */
+function normalizarNome(s){
+  return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+}
+/* junta cargos de vários blocos: mesmo cargo, disciplinas e tópicos unidos sem duplicar */
+function mesclarCargos(mapa, cargos){
+  (cargos || []).forEach(c=>{
+    if(!c || !c.nome) return;
+    const chave = normalizarNome(c.nome);
+    if(!chave) return;
+    if(!mapa[chave]) mapa[chave] = { nome: String(c.nome).trim(), disciplinas: {} };
+    (c.disciplinas || []).forEach(d=>{
+      if(!d || !d.nome) return;
+      const kd = normalizarNome(d.nome);
+      if(!kd) return;
+      if(!mapa[chave].disciplinas[kd]) mapa[chave].disciplinas[kd] = { nome: String(d.nome).trim(), topicos: [] };
+      (d.topicos || []).forEach(tp=>{
+        const limpo = limparTextoEdital(String(tp||"").trim());
+        if(limpo && !mapa[chave].disciplinas[kd].topicos.includes(limpo))
+          mapa[chave].disciplinas[kd].topicos.push(limpo);
+      });
+    });
+  });
+}
+
+/* ============================================================ CATÁLOGO DE EDITAIS */
+let catalogoCache = null;
+
+async function carregarCatalogo(forcar){
+  const box = document.getElementById("listaCatalogo");
+  if(box) box.innerHTML = "carregando…";
+  try{
+    if(!catalogoCache || forcar){
+      const r = await fetch("./catalogo/index.json?t=" + Date.now());
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      catalogoCache = await r.json();
+    }
+    const lista = (catalogoCache.concursos || []);
+    if(!lista.length){
+      if(box) box.innerHTML = "Nenhum concurso no catálogo ainda.";
+      return;
+    }
+    const html = lista.map(c=>`
+      <div class="rev">
+        <span class="t">${c.nome}<small>${c.banca ? c.banca + " · " : ""}${c.disciplinas} disciplinas · ${c.topicos} tópicos${c.questoes ? " · " + c.questoes + " questões" : ""}${c.prova ? " · prova " + formatarBR(c.prova) : ""}</small></span>
+        <button class="ok" onclick="usarCatalogo('${c.id}')">usar</button>
+      </div>`).join("");
+    if(box) box.innerHTML = html;
+    const boxWz = document.getElementById("wz-corpo");
+    if(boxWz && !document.getElementById("assistente").classList.contains("oculto")){
+      boxWz.innerHTML = `<h4>Concursos prontos</h4>
+        <p class="sub">Escolha um — as matérias já estão processadas.</p>` +
+        lista.map(c=>`<button class="wz-op" onclick="usarCatalogo('${c.id}', true)">
+          <span class="em">📚</span><span class="tx"><b>${c.nome}</b>
+          <span>${c.disciplinas} disciplinas · ${c.topicos} tópicos</span></span></button>`).join("");
+    }
+  }catch(e){
+    if(box) box.innerHTML = `<div class="status err">Não carreguei o catálogo (${e.message}).</div>`;
+  }
+}
+
+async function usarCatalogo(id, doAssistente){
+  try{
+    const r = await fetch("./catalogo/" + id + ".json?t=" + Date.now());
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    const dados = await r.json();
+    const disc = (dados.disciplinas || []).filter(d=> d.nome);
+    if(!disc.length) throw new Error("entrada vazia");
+
+    db.edital = {
+      texto: disc.map(d=> d.nome + "\n" + (d.topicos||[]).map(x=>"• " + x).join("\n")).join("\n\n"),
+      disciplinas: disc.map(d=>({ nome:d.nome, topicos: d.topicos || [] })),
+      nome: (dados.cargo || dados.nome || "").slice(0, 44)
+    };
+    db.pesos = {};
+    disc.forEach(d=>{ db.pesos[d.nome] = Math.max(1, (d.topicos||[]).length); });
+    db.metaDisciplina = db.metaDisciplina || {};
+    disc.forEach(d=>{
+      if(Number(d.questoes) > 0) db.metaDisciplina[d.nome] = {questoes:Number(d.questoes), peso:Number(d.peso)||1};
+    });
+    if(dados.prova && !db.rotina.prova){
+      db.rotina.prova = dados.prova;
+      const el = document.getElementById("p-prova"); if(el) el.value = dados.prova;
+    }
+    const campo = document.getElementById("p-nome");
+    if(campo) campo.value = (dados.cargo || dados.nome || "").slice(0,44);
+
+    // se estiver no assistente, pula direto para a dificuldade
+    if(doAssistente){
+      WZ.cargoEscolhido = dados.cargo || dados.nome;
+      WZ.disciplinas = disc;
+      salvar(); renderPesos(); renderMaterias(); popularSelects();
+      toast(disc.length + " disciplinas carregadas do catálogo", "ok");
+      wzIr(2);
+      return;
+    }
+
+    salvar(); renderPesos(); renderMaterias(); popularSelects();
+    atualizarJanela(); atualizarBase(); aplicarModoInicial(); renderProximaAcao();
+    const total = disc.reduce((a,d)=>a + (d.topicos||[]).length, 0);
+    toast(`${dados.nome}: ${disc.length} disciplinas, ${total} tópicos`, "ok");
+    tab("plano"); subTab("hoje");
+  }catch(e){
+    toast("Não carreguei: " + e.message, "err");
+  }
+}
+
+/* ============================================================ VARREDURA DO EDITAL INTEIRO */
+/* divide o texto em blocos e pede à IA para extrair, em cada um, os cargos e disciplinas */
+async function varrerEditalEmBlocos(texto, aoProgresso){
+  const TAM = 24000;
+  const blocos = [];
+  for(let i = 0; i < texto.length && blocos.length < 12; i += TAM)
+    blocos.push(texto.slice(i, i + TAM));
+
+  const mapa = {};
+  let falhas = 0;
+  for(let i = 0; i < blocos.length; i++){
+    if(aoProgresso) aoProgresso(i + 1, blocos.length);
+    const prompt = `Abaixo está um TRECHO de um edital de concurso público brasileiro.
+Extraia os cargos que aparecem neste trecho e, para cada cargo, as disciplinas e os tópicos
+que o edital atribui a ele. Se o trecho não tiver conteúdo programático, devolva cargos vazio.
+Responda APENAS com JSON:
+{"cargos":[{"nome":"","disciplinas":[{"nome":"","topicos":[""]}]}]}
+Não invente; use os nomes como estão no texto.
+TRECHO:
+${blocos[i]}`;
+    if(i > 0) await new Promise(r=>setTimeout(r, 1200));
+    try{
+      const obj = await chamarUmaVez(prompt, 4096, 12000);
+      mesclarCargos(mapa, obj.cargos);
+    }catch(e){
+      await new Promise(r=>setTimeout(r, 3000));
+      falhas++;
+      // uma segunda tentativa rápida no mesmo bloco
+      try{
+        const obj = await chamarUmaVez(prompt, 4096, 12000);
+        mesclarCargos(mapa, obj.cargos);
+        falhas--;
+      }catch(e2){}
+    }
+  }
+
+  const cargos = Object.values(mapa).map(c=>({
+    nome: c.nome,
+    nivel: /t[ée]cnico|m[ée]dio|auxiliar/i.test(c.nome) ? "médio" : "superior",
+    disciplinas: Object.values(c.disciplinas)
+  })).filter(c=> c.disciplinas.length)
+    .sort((a,b)=> b.disciplinas.length - a.disciplinas.length);
+
+  return {cargos, falhas, blocos: blocos.length};
 }
 
 /* ============================================================ CARGOS: RESERVA POR IA */
@@ -3046,6 +3233,77 @@ document.addEventListener("keydown", (e)=>{
   }
 });
 
+/* ============================================================ EDITOR DE MATÉRIAS */
+function abrirEditor(){
+  renderEditor();
+  const el = document.getElementById("painelEditor");
+  if(el) el.classList.remove("oculto");
+}
+function fecharEditor(ev){
+  const el = document.getElementById("painelEditor");
+  if(ev && ev.target !== el) return;
+  if(el) el.classList.add("oculto");
+  renderPesos(); renderMaterias(); popularSelects(); renderConstancia(); atualizarBase();
+}
+function renderEditor(){
+  const box = document.getElementById("editorLista");
+  if(!box) return;
+  const disc = disciplinas();
+  if(!disc.length){
+    box.innerHTML = `<div class="mini">Nenhuma matéria carregada.</div>`;
+  } else {
+    box.innerHTML = disc.map((d,i)=>`
+      <div class="rev">
+        <span class="t">${d.nome}<small>${d.topicos.length} tópicos · peso ${db.pesos[d.nome] || 1}</small></span>
+        <button class="no" onclick="renomearDisciplina(${i})">✎</button>
+        <button class="no" onclick="removerDisciplina(${i})">✕</button>
+      </div>`).join("");
+  }
+  box.insertAdjacentHTML("beforeend",
+    `<button class="btn sec mini" style="width:100%;margin-top:8px" onclick="adicionarDisciplina()">
+       ＋ Adicionar matéria</button>`);
+}
+function adicionarDisciplina(){
+  const nome = prompt("Nome da matéria:");
+  if(!nome) return;
+  const limpo = nome.trim().slice(0, 60);
+  if(!limpo) return;
+  if(!db.edital) db.edital = {texto:"", disciplinas:[]};
+  db.edital.disciplinas = db.edital.disciplinas || [];
+  if(db.edital.disciplinas.some(d=> d.nome.toLowerCase() === limpo.toLowerCase())){
+    toast("Essa matéria já existe", "info"); return;
+  }
+  db.edital.disciplinas.push({ nome: limpo, topicos: [] });
+  db.pesos[limpo] = db.pesos[limpo] || 1;
+  salvar(); renderEditor(); renderPesos(); renderMaterias();
+  toast("Matéria adicionada: " + limpo, "ok");
+}
+function removerDisciplina(i){
+  const disc = disciplinas();
+  const alvo = disc[i];
+  if(!alvo) return;
+  if(!confirm('Remover "' + alvo.nome + '" do plano?')) return;
+  db.edital.disciplinas = disc.filter((_,k)=> k !== i);
+  delete db.pesos[alvo.nome];
+  salvar(); renderEditor(); renderPesos(); renderMaterias(); popularSelects();
+  toast("Removida: " + alvo.nome, "info");
+}
+function renomearDisciplina(i){
+  const disc = disciplinas();
+  const alvo = disc[i];
+  if(!alvo) return;
+  const novo = prompt("Nome da matéria:", alvo.nome);
+  if(!novo) return;
+  const limpo = novo.trim().slice(0, 60);
+  if(!limpo) return;
+  const pesoAntigo = db.pesos[alvo.nome];
+  alvo.nome = limpo;
+  delete db.pesos[Object.keys(db.pesos).find(k=> k === limpo)];   // evita duplicar
+  db.pesos[limpo] = pesoAntigo || alvo.topicos.length || 1;
+  salvar(); renderEditor(); renderPesos(); renderMaterias(); popularSelects();
+  toast("Renomeada", "ok");
+}
+
 /* ============================================================ ASSISTENTE (questionário) */
 const WZ = { passo: 1, total: 6, fonte: null, textoEdital: "", cargos: [], cargoEscolhido: null, disciplinas: null };
 const WZ_TITULOS = ["", "Seu edital", "Dificuldade", "Questões da prova", "Sua rotina", "Data da prova", "Confirmação"];
@@ -3093,6 +3351,8 @@ function wzPasso1(c){
       <span class="em">📄</span><span class="tx"><b>Tenho o PDF</b><span>anexar o arquivo do edital</span></span></button>
     <button class="wz-op" onclick="wzEscolherFonte('colar')">
       <span class="em">📋</span><span class="tx"><b>Vou colar o texto</b><span>copiar o Anexo I do edital</span></span></button>
+    <button class="wz-op" onclick="wzEscolherFonte('catalogo')">
+      <span class="em">📚</span><span class="tx"><b>Escolher da lista de prontos</b><span>concursos já processados, carrega na hora</span></span></button>
     <button class="wz-op" onclick="wzEscolherFonte('web')">
       <span class="em">🔍</span><span class="tx"><b>Não tenho — procurar na internet</b><span>buscar o concurso</span></span></button>
     <button class="wz-op" onclick="wzEscolherFonte('sem')">
@@ -3116,7 +3376,8 @@ function wzEscolherFonte(fonte){
         input.value = "";
         if(texto.length < 200){ toast("Não consegui ler o PDF", "err"); wzIr(1); return; }
         WZ.textoEdital = texto;
-        wzDetectarCargos();
+        if(db.apiKey) wzVarrerTudo();
+        else wzDetectarCargos();
       }catch(e){ toast("Falhou ao ler: " + e.message, "err"); wzIr(1); }
     };
     input.click();
@@ -3128,6 +3389,12 @@ function wzEscolherFonte(fonte){
       <p class="sub">O ideal é o Anexo I (conteúdo programático).</p>
       <textarea id="wz-texto" style="min-height:200px" placeholder="Cole aqui…"></textarea>`;
     wzRodape(`<button class="btn principal" style="width:100%" onclick="wzColar()">Continuar</button>`);
+    return;
+  }
+  if(fonte === "catalogo"){
+    const c = document.getElementById("wz-corpo");
+    c.innerHTML = `<h4>Concursos prontos</h4><p class="sub">carregando…</p>`;
+    carregarCatalogo(true);
     return;
   }
   if(fonte === "web"){
@@ -3150,7 +3417,9 @@ function wzColar(){
   const txt = (document.getElementById("wz-texto").value || "").trim();
   if(txt.length < 200){ toast("Cole mais texto", "err"); return; }
   WZ.textoEdital = txt;
-  wzDetectarCargos();
+  // automático: com chave, lê o documento inteiro em blocos
+  if(db.apiKey) wzVarrerTudo();
+  else wzDetectarCargos();
 }
 async function wzDetectarCargos(){
   const c = document.getElementById("wz-corpo");
@@ -3174,7 +3443,49 @@ async function wzDetectarCargos(){
     cargos.map((x,i)=>`<button class="wz-op" onclick="wzEscolherCargo(${i})">
       <span class="em">${/T[ÉE]CNICO/i.test(x.nome) ? "🎯" : "📚"}</span>
       <span class="tx"><b>${x.nome}</b><span>nível ${x.nivel}</span></span></button>`).join("");
+  wzRodape(`<button class="btn principal mini" style="width:100%" onclick="wzVarrerTudo()">
+      🔎 Ler o edital inteiro em blocos
+    </button>
+    <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="wzIr(1)">Voltar</button>`);
+}
+
+/* varre o documento todo e mescla os cargos encontrados */
+async function wzVarrerTudo(){
+  const c = document.getElementById("wz-corpo");
+  const texto = WZ.textoEdital || "";
+  if(!texto){ toast("Sem texto para ler", "err"); return; }
+  if(!db.apiKey){ toast("Precisa da chave de API para isso", "err"); return; }
+
+  const nBlocos = Math.min(12, Math.ceil(texto.length / 24000));
+  c.innerHTML = `<h4>Lendo o edital inteiro…</h4>
+    <p class="sub" id="wz-aguarde">parte 1 de ${nBlocos} · pode levar até 1 minuto</p>
+    <div class="mini">Vou dividir o documento em ${nBlocos} blocos e juntar o que encontrar em cada um.</div>`;
+  wzRodape("");
+
+  const t0 = Date.now();
+  const r = await varrerEditalEmBlocos(texto, (i, total)=>{
+    const el = document.getElementById("wz-aguarde");
+    if(el) el.textContent = `parte ${i} de ${total} · ${Math.round((Date.now()-t0)/1000)}s`;
+  });
+
+  if(!r.cargos.length){
+    c.innerHTML = `<h4>Não encontrei cargos</h4>
+      <p class="sub">O texto pode não ter o conteúdo programático.</p>`;
+    wzRodape(`<button class="btn sec mini" style="width:100%" onclick="wzIr(1)">Voltar</button>`);
+    return;
+  }
+
+  WZ.cargos = r.cargos;
+  WZ.cargosCompletos = r.cargos;
+  const seg = Math.round((Date.now()-t0)/1000);
+  c.innerHTML = `<h4>Qual é o seu cargo?</h4>
+    <p class="sub">${r.cargos.length} cargos encontrados em ${r.blocos} bloco(s) · ${seg}s${r.falhas ? " · " + r.falhas + " bloco(s) falharam" : ""}</p>` +
+    r.cargos.map((x,i)=>`<button class="wz-op" onclick="wzEscolherCargo(${i})">
+      <span class="em">${/t[ée]cnico/i.test(x.nome) ? "🎯" : "📚"}</span>
+      <span class="tx"><b>${x.nome}</b><span>${x.disciplinas.length} disciplinas · ${x.disciplinas.reduce((a,d)=>a+(d.topicos||[]).length,0)} tópicos</span></span>
+    </button>`).join("");
   wzRodape(`<button class="btn sec mini" style="width:100%" onclick="wzIr(1)">Voltar</button>`);
+  toast(r.cargos.length + " cargos lidos do documento inteiro", "ok");
 }
 let _wzCargo = false;
 async function wzEscolherCargo(i){
@@ -3185,6 +3496,30 @@ async function wzEscolherCargo(i){
 async function _wzEscolherCargo(i){
   const cargo = WZ.cargos[i];
   if(!cargo) return;
+
+  // veio da varredura completa: já temos as disciplinas, não precisa chamar a IA de novo
+  if(cargo.disciplinas && cargo.disciplinas.length){
+    const disc = cargo.disciplinas.map(d=>({
+      nome: limparTextoEdital(d.nome),
+      topicos: (d.topicos || []).map(limparTextoEdital)
+    })).filter(d=> d.nome && d.topicos.length);
+    if(disc.length){
+      db.edital = { texto: WZ.textoEdital || "", disciplinas: disc, nome: cargo.nome.slice(0,44) };
+      db.pesos = {};
+      disc.forEach(d=> db.pesos[d.nome] = Math.max(1, d.topicos.length));
+      // questões da prova pela tabela do edital
+      const daTabela = extrairQuestoesDoEdital(WZ.textoEdital || "", disc.map(d=>d.nome), cargo.nome);
+      Object.keys(daTabela).forEach(n=> definirMeta(n, "questoes", daTabela[n]));
+      const campo = document.getElementById("p-nome");
+      if(campo && !campo.value) campo.value = cargo.nome.slice(0,44);
+      salvar(); renderPesos(); renderMaterias(); popularSelects();
+      WZ.disciplinas = disc; WZ.cargoEscolhido = cargo.nome;
+      const total = disc.reduce((a,d)=>a + d.topicos.length, 0);
+      toast(cargo.nome + ": " + disc.length + " disciplinas", "ok");
+      wzIr(2);
+      return;
+    }
+  }
   const c = document.getElementById("wz-corpo");
   c.innerHTML = `<h4>Lendo ${cargo.nome}…</h4><p class="sub" id="wz-aguarde">preparando</p>`;
   wzRodape("");
@@ -3468,6 +3803,8 @@ function wzPasso4(c){
       <div>Disponibilidade: <b>${horas.toString().replace(".",",")} h por semana</b></div>
     </div>
     <div class="mini" style="margin-bottom:8px"><b>Pesos (nº de submatérias):</b> ${top.map(d=>`${d.nome} ${db.pesos[d.nome]||1}`).join(" · ")}</div>
+    <button class="btn sec mini" style="width:100%;margin-bottom:10px" onclick="abrirEditor()">
+      ✎ Conferir / corrigir matérias</button>
     <div class="mini" style="margin-bottom:8px"><b>Questões da prova:</b> ${
       disc.filter(d=> metaDe(d.nome).questoes > 0).length
         ? disc.filter(d=>metaDe(d.nome).questoes>0).map(d=>`${d.nome} ${metaDe(d.nome).questoes}${metaDe(d.nome).peso>1?("×"+metaDe(d.nome).peso):""}`).join(" · ")
@@ -3739,7 +4076,7 @@ function tab(n){
   if(n==="reg") renderRegistro();
   if(n==="quest") renderHistorico();
   if(n==="prio"){ renderPrioridades(); renderCadernoErros(); }
-  if(n==="plano"){ renderHoje(); renderChips2(); renderSaldo(); renderSemana(); renderRotinaTabela();
+  if(n==="plano"){ carregarCatalogo(); renderHoje(); renderChips2(); renderSaldo(); renderSemana(); renderRotinaTabela();
     renderListaPlanos(); renderPesos(); resumo(); atualizarJanela(); }
   if(n==="painel"){ renderChips(); renderConstancia(); renderProximaAcao(); desenharTudo(); }
 }
