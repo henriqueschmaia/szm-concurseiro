@@ -70,7 +70,7 @@
   .item button{border:0;background:none;color:#9C2727;font-size:13px}
   .tag{font-size:10px;padding:2px 6px;border-radius:99px;background:#E8EEF9;color:var(--azul2)}
   .mini{font-size:11px;color:#6B7280;margin-top:5px;line-height:1.45}
-  .oculto{display:none}
+  .oculto{display:none !important}
   .aviso{background:#FFF9EC;border-left:4px solid var(--ouro);padding:9px;border-radius:10px;font-size:11px;margin-bottom:8px;line-height:1.45}
   .prio{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid #E6EAF0}
   .prio .nome{flex:1;font-size:12px}
@@ -108,7 +108,7 @@
         display:grid;place-items:center;padding:0 4px;font-style:normal}
   .overlay{position:fixed;inset:0;background:rgba(10,34,64,.55);z-index:90;display:flex;
            align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
-  .overlay.oculto{display:none}
+  .overlay.oculto{display:none !important}
   .sheet{background:#fff;width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:16px 14px 22px;
          max-height:82vh;overflow:auto;animation:sobe .25s ease}
   @keyframes sobe{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
@@ -441,22 +441,42 @@
 <main>
   <!-- PAINEL -->
   <section id="tab-painel">
+    <div class="card oculto" id="boasVindas">
+      <div style="text-align:center;padding:8px 4px 4px">
+        <div style="font-size:44px;line-height:1">🎓</div>
+        <h2 style="margin:10px 0 6px;font-size:17px;color:var(--brand);text-transform:none;letter-spacing:0">
+          Vamos montar seu plano</h2>
+        <div class="mini" style="font-size:13px;line-height:1.55">
+          São 5 perguntas rápidas: seu edital, sua dificuldade em cada matéria,
+          quantas questões caem, seu tempo livre e a data da prova.
+        </div>
+      </div>
+      <button class="btn principal" style="width:100%;margin-top:14px" onclick="abrirAssistente()">
+        ⚡ Começar</button>
+      <div class="mini" style="text-align:center;margin-top:8px">
+        Leva cerca de 3 minutos. Você pode mudar tudo depois.</div>
+    </div>
+
     <div class="card" id="cardProxima">
       <h2>O que fazer agora</h2>
       <div id="proximaAcao" class="mini">—</div>
     </div>
 
-    <div class="card">
+    <div class="card" id="cardPlanoAtivo">
       <h2>Plano ativo</h2>
       <div class="chips" id="chipsPlanos"></div>
       <div class="mini" id="planoInfo">Nenhum plano ainda.</div>
+      <div id="acoesPlano" style="display:none;gap:8px;margin-top:10px">
+        <button class="btn sec mini" style="flex:1" onclick="renomearPlano(db.ativoId)">✎ Renomear</button>
+        <button class="btn sec mini" style="flex:1;color:#9C2727;border-color:#E8C4C4" onclick="excluirPlanoAtivo()">🗑 Excluir plano</button>
+      </div>
       <button class="btn principal" style="width:100%;margin-top:10px" onclick="abrirAssistente()">
         ⚡ Montar meu plano</button>
       <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="abrirMenu()">
         acesso rápido</button>
       <div class="mini" id="basePlano" style="text-align:center"></div>
     </div>
-    <div class="card">
+    <div class="card" id="cardHoje">
       <h2>Hoje</h2>
       <div class="kpi"><span id="kpi-est">0,00 h</span><span id="kpi-meta">meta 0 h</span></div>
       <div class="anel" id="anelHoje" style="--p:0">
@@ -467,7 +487,7 @@
         <div><div class="num" id="n-questoes">0</div><div class="mini" style="margin:0">baterias</div></div>
       </div>
     </div>
-    <div class="card"><h2>Constância</h2><div id="constancia"></div></div>
+    <div class="card" id="cardConstancia"><h2>Constância</h2><div id="constancia"></div></div>
 
     <button class="btn sec" style="width:100%" onclick="alternarStats()" id="btnStats">
       📊 Ver estatísticas</button>
@@ -723,7 +743,7 @@ const ROTINA_PADRAO = {
 let db = { sessoes:[], questoes:[], edital:{texto:"",disciplinas:[]},
            pesos:{}, planos:[], ativoId:null, apiKey:"", apiModel:"gemini-flash-lite-latest",
            avisos:[], planoInicio:null, cacheBuscas:{}, webStatus:"desconhecido", dificuldade:{},
-           metaDisciplina:{}, revisoes:[], versao:"v29",
+           metaDisciplina:{}, revisoes:[], versao:"v39",
            rotina: Object.assign({},ROTINA_PADRAO) };
 
 function carregar(){
@@ -740,6 +760,18 @@ function carregar(){
   if(!db.pesos||!Object.keys(db.pesos).length) resetarPesos();
   if(db.planos.length && !db.ativoId) db.ativoId=db.planos[0].id;
 }
+/* aviso flutuante — usado por quase todas as ações do app */
+function toast(msg, tipo){
+  const box = document.getElementById("toasts");
+  if(!box){ try{ console.log("[aviso] " + msg); }catch(e){} return; }
+  const el = document.createElement("div");
+  el.className = "toast " + (tipo || "info");
+  el.textContent = msg;
+  box.appendChild(el);
+  requestAnimationFrame(()=> el.classList.add("mostra"));
+  setTimeout(()=>{ el.classList.remove("mostra"); setTimeout(()=> el.remove(), 260); }, 2600);
+}
+
 let avisoArmazenamento = false;
 function salvar(){
   try{
@@ -753,8 +785,37 @@ function salvar(){
 }
 function resetarPesos(){ db.pesos={}; disciplinas().forEach(d=>db.pesos[d.nome]=Math.max(1,d.topicos.length)); }
 function disciplinas(){
-  if(db.edital&&db.edital.disciplinas&&db.edital.disciplinas.length) return db.edital.disciplinas;
-  return Object.keys(PADRAO).map(n=>({nome:n,topicos:PADRAO[n]}));
+  if(db.edital && db.edital.disciplinas && db.edital.disciplinas.length) return db.edital.disciplinas;
+  return [];   // estado limpo: nada carregado até o usuário responder
+}
+function disciplinasPadrao(){
+  return Object.keys(PADRAO).map(n=>({nome:n, topicos:PADRAO[n].slice()}));
+}
+/* o app só mostra conteúdo depois que houver configuração */
+function temConfiguracao(){
+  return (db.edital && db.edital.disciplinas && db.edital.disciplinas.length > 0) ||
+         (db.planos && db.planos.length > 0) ||
+         (db.rotina && db.rotina.configurada);
+}
+function aplicarModoInicial(){
+  const limpo = !temConfiguracao();
+  const esconder = ["cardProxima","cardPlanoAtivo","cardHoje","cardConstancia","btnStats","blocoStats"];
+  esconder.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(limpo) el.classList.add("oculto");
+    else if(id !== "blocoStats") el.classList.remove("oculto");
+  });
+  const bv = document.getElementById("boasVindas");
+  if(bv) bv.classList.toggle("oculto", !limpo);
+  if(limpo){
+    const cab = document.getElementById("cabecalho");
+    if(cab) cab.textContent = "Configure seu plano para começar";
+  }
+  const sub = document.querySelector('.subnav');
+  if(sub) sub.classList.toggle("oculto", limpo);
+  const sino = document.querySelector('.sino');
+  if(sino) sino.classList.toggle("oculto", limpo);   // sem sino no estado inicial
 }
 
 /* ============================================================ DATAS E DISPONIBILIDADE */
@@ -783,7 +844,8 @@ function disponibilidade(){
     if((r.faculDias||[]).includes(d)) livre -= minutosEntre(r.faculIni,r.faculFim)/60;
     if((r.treinoDias||[]).includes(d)) livre -= (r.treinoDur||0)/60;
     livre -= (r.desloc||0)/60;
-    out[d] = Math.max(0, Math.min(12, +livre.toFixed(1)));
+    const TETO_DIA = 6;   // teto realista de estudo por dia
+    out[d] = Math.max(0, Math.min(TETO_DIA, +livre.toFixed(1)));
   }
   return out;
 }
@@ -846,7 +908,16 @@ function nomesMaterias(){ return disciplinas().map(d=>d.nome); }
 function garantirEstado(){ nomesMaterias().forEach(n=>{ if(!estado[n]) estado[n]={seg:0,rodando:false,marca:0}; }); }
 function renderMaterias(){
   garantirEstado();
-  document.getElementById("materias").innerHTML = nomesMaterias().map((m,i)=>{
+  const lista = nomesMaterias();
+  const box = document.getElementById("materias");
+  if(!lista.length){
+    box.innerHTML = `<div class="mini" style="text-align:center;padding:14px 6px">
+      Nenhuma matéria carregada ainda.<br>
+      <button class="btn principal mini" style="margin-top:10px" onclick="abrirAssistente()">Montar meu plano</button>
+    </div>`;
+    return;
+  }
+  box.innerHTML = lista.map((m,i)=>{
     const e=estado[m];
     return `<div class="mat ${ativoNome===m?'run':''}">
       <span class="nome">${m}</span><span class="tempo" id="t${i}">00:00:00</span>
@@ -915,7 +986,12 @@ function renderRegistro(){
   document.getElementById("reg-total").textContent=(min/60).toFixed(2).replace(".",",")+" h";
   document.getElementById("reg-meta").textContent="meta "+String(metaDoDia(d)).replace(".",",")+" h";
   document.getElementById("reg-barra").style.width=(meta?Math.min(100,min/meta*100):0)+"%";
-  document.getElementById("reg-materias").innerHTML=nomesMaterias().map(m=>{
+  const materiasReg = nomesMaterias();
+  if(!materiasReg.length){
+    document.getElementById("reg-materias").innerHTML =
+      `<div class="mini">Nenhuma matéria carregada. Monte seu plano primeiro.</div>`;
+  } else
+  document.getElementById("reg-materias").innerHTML=materiasReg.map(m=>{
     const atual=db.sessoes.filter(s=>s.data===d&&s.materia===m).reduce((a,s)=>a+s.minutos,0);
     return `<div class="linha"><label>${m}</label>
       <input type="number" min="0" max="1440" value="${atual||""}" placeholder="0" onchange="lancar('${d}','${m.replace(/'/g,"\\'")}',this.value)"></div>`;
@@ -1366,6 +1442,8 @@ function renderChips(){
   if(!db.planos.length){ box.innerHTML=""; document.getElementById("planoInfo").textContent="Nenhum plano ainda."; return; }
   box.innerHTML=db.planos.map(p=>`<button class="chip ${p.id===db.ativoId?'on':''}" onclick="ativarPlano('${p.id}')">${p.nome}</button>`).join("");
   const p=planoAtivo();
+  const acoes = document.getElementById("acoesPlano");
+  if(acoes) acoes.style.display = p ? "flex" : "none";
   document.getElementById("planoInfo").textContent = p
     ? `${p.nome} · ${p.inicio.split("-").reverse().join("/")} a ${p.fim.split("-").reverse().join("/")} · ${p.dias} dias · ${p.horasSemana.toString().replace(".",",")} h/sem · ${p.origem}`
     : "Nenhum plano ativo.";
@@ -1382,7 +1460,25 @@ function renderListaPlanos(){
     <span style="color:#6B7280">${p.dias} dias · ${p.horasSemana.toString().replace(".",",")} h/sem · ${p.origem}</span></span>
     <span><button class="btn mini sec" onclick="ativarPlano('${p.id}')">usar</button>
     <button class="btn mini sec" onclick="renomearPlano('${p.id}')">✎</button>
-    <button onclick="apagarPlano('${p.id}')">✕</button></span></div>`).join("");
+    <button onclick="apagarPlano('${p.id}')" title="excluir">✕</button></span></div>`).join("");
+}
+function excluirPlanoAtivo(){
+  const p = planoAtivo();
+  if(!p){ toast("Nenhum plano ativo", "err"); return; }
+  excluirPlano(p.id, p.nome);
+}
+function excluirPlano(id, nome){
+  const alvo = db.planos.find(x=> x.id === id);
+  if(!alvo) return;
+  const rotulo = nome || alvo.nome;
+  const sessoes = db.sessoes.length;
+  if(!confirm('Excluir o plano "' + rotulo + '"?\n\nSuas ' + sessoes + ' sessões de estudo e questões continuam salvas — só o cronograma será apagado.')) return;
+  db.planos = db.planos.filter(x=> x.id !== id);
+  if(db.ativoId === id) db.ativoId = db.planos[0] ? db.planos[0].id : null;
+  salvar();
+  renderListaPlanos(); renderChips(); renderChips2(); renderSemana(); renderHoje();
+  renderSaldo(); renderProximaAcao(); atualizarBase(); desenharTudo();
+  toast("Plano excluído: " + rotulo, "info");
 }
 function apagarPlano(id){
   if(!confirm("Apagar este plano?")) return;
@@ -1393,53 +1489,69 @@ function apagarPlano(id){
 }
 
 function montarCiclo(inicio, usarProgresso){
-  const disc=disciplinas();
+  const disc = disciplinas();
+  if(!disc.length) return {};
   const base = usarProgresso ? pesosAjustados() : db.pesos;
   const pesos = {};
-  disc.forEach(d=>{
-    pesos[d.nome] = pesoBase(d.nome) * fatorDificuldade(d.nome);
-  });
-  const somaPesos=disc.reduce((a,d)=>a+(pesos[d.nome]||1),0)||1;
-  const disp=disponibilidade(), diasEstudo=[1,2,3,4,5,6].filter(d=>disp[d]>0);
-  const ciclo={}; [1,2,3,4,5,6].forEach(d=>ciclo[d]=[]);
-  const blocos=[];
-  disc.forEach(d=>{
-    const horasSem=disponibilidade().reduce((a,_,i)=>a+(diasEstudo.includes(i)?disp[i]:0),0);
-    let horas=horasSem*((pesos[d.nome]||1)/somaPesos), i=0, guard=0;
-    while(horas>0.2 && guard<80){
-      const h=Math.min(1.5,horas);
-      const praticados = subtopicosPraticados();
-      const ordenados = [...d.topicos].sort((a,b)=>{
-        const pa = (praticados[d.nome+"|"+a]||0) > 0 ? 1 : 0;
-        const pb = (praticados[d.nome+"|"+b]||0) > 0 ? 1 : 0;
-        return pa - pb;
-      });
-      blocos.push({materia:d.nome,topico:ordenados[i%Math.max(1,ordenados.length)],horas:+h.toFixed(1)});
-      horas-=h; i++; guard++;
-    }
-  });
-  blocos.sort((a,b)=>b.horas-a.horas);
-  let dia=0;
-  blocos.forEach(b=>{
-    let t=0;
-    while(t<7){
-      const d=diasEstudo[dia%diasEstudo.length], usado=(ciclo[d]||[]).reduce((a,x)=>a+x.horas,0);
-      if(usado+b.horas<=disp[d]+0.01){ ciclo[d].push(b); break; }
-      dia++; t++;
+  disc.forEach(d=>{ pesos[d.nome] = Math.max(0.5, (base[d.nome] || 1) * fatorDificuldade(d.nome)); });
+  const somaPesos = disc.reduce((a,d)=>a + pesos[d.nome], 0) || 1;
+
+  const disp = disponibilidade();
+  const dias = [1,2,3,4,5,6].filter(d=> disp[d] > 0);
+  if(!dias.length) return {};
+
+  const totalSemana = dias.reduce((a,d)=>a + disp[d], 0);
+
+  // cota de horas por matéria na semana
+  const restante = {};
+  disc.forEach(d=>{ restante[d.nome] = +((totalSemana * pesos[d.nome] / somaPesos)).toFixed(2); });
+
+  const ciclo = {}; [1,2,3,4,5,6].forEach(d=> ciclo[d] = []);
+  const giroTopico = {};
+  disc.forEach(d=> giroTopico[d.nome] = 0);
+
+  // preenche dia a dia, alternando matérias e respeitando a capacidade
+  dias.forEach(d=>{
+    let livre = disp[d];
+    const jaNoDia = new Set();
+    let guard = 0;
+    while(livre >= 0.9 && guard++ < 12){
+      // candidatas: ainda têm horas e não estão no dia (se houver alternativa)
+      let cands = disc.filter(x=> restante[x.nome] >= 0.9 && !jaNoDia.has(x.nome));
+      if(!cands.length) cands = disc.filter(x=> restante[x.nome] >= 0.9);
+      if(!cands.length) break;
+      // maior necessidade primeiro
+      cands.sort((a,b)=> restante[b.nome] - restante[a.nome]);
+      const mat = cands[0];
+      const bloco = Math.min(1.5, livre, restante[mat.nome]);
+      if(bloco < 0.9) break;
+      const horas = +bloco.toFixed(1);
+      const lista = mat.topicos || [];
+      const topico = lista.length ? lista[giroTopico[mat.nome] % lista.length] : "";
+      ciclo[d].push({ materia: mat.nome, topico, horas });
+      giroTopico[mat.nome]++;
+      restante[mat.nome] = +(restante[mat.nome] - horas).toFixed(2);
+      jaNoDia.add(mat.nome);
+      livre = +(livre - horas).toFixed(2);
     }
   });
   return ciclo;
 }
+
 function novoPlanoRegras(){
   const j=janela();
-  if(horasSemana(j.inicio) < 1){
+  const alvo = horasSemana(j.inicio);
+  if(alvo < 1){
     document.getElementById("ia-msg").textContent =
       "Sua rotina não deixa horas livres. Revise o passo 1 (folgas, trabalho, faculdade).";
+    toast("Sua rotina não deixa horas livres", "err");
     return;
   }
-  const ciclo=montarCiclo(j.inicio);
+  // o normalizador garante soma == disponibilidade e respeito ao limite diário
+  const ciclo = normalizarCiclo(montarCiclo(j.inicio), alvo);
+  const totalCiclo = Object.values(ciclo).flat().reduce((a,b)=>a+b.horas,0);
   const plano={id:uid(),nome:(nomeEscolhido() || nomePadrao())+" (regras)",inicio:j.inicio,fim:j.fim,dias:j.dias,
-    horasSemana:horasSemana(j.inicio),ciclo,origem:"regras",criado:new Date().toISOString()};
+    horasSemana:+totalCiclo.toFixed(1),ciclo,origem:"regras",criado:new Date().toISOString()};
   db.planos.push(plano); db.ativoId=plano.id; salvar();
   renderListaPlanos(); renderChips(); renderSemana(); renderHoje(); desenharTudo();
   document.getElementById("ia-msg").textContent="Plano criado e ativado.";
@@ -1670,6 +1782,30 @@ function fetchComPrazo(url, opcoes, ms){
   const timer = setTimeout(()=> ctrl.abort(), ms);
   return fetch(url, Object.assign({}, opcoes, {signal: ctrl.signal}))
     .finally(()=> clearTimeout(timer));
+}
+
+/* uma única tentativa, com prazo curto — sem acumular espera */
+async function chamarUmaVez(prompt, maxTokens, ms){
+  const modelo = "gemini-flash-lite-latest";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${encodeURIComponent(db.apiKey)}`;
+  const r = await fetchComPrazo(url, {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({contents:[{parts:[{text:prompt}]}],
+      generationConfig:{temperature:0.1, maxOutputTokens:maxTokens||4096}})
+  }, ms || 12000);
+  const texto = await r.text();
+  if(!r.ok){
+    let detalhe = "";
+    try{ detalhe = JSON.parse(texto).error?.message || ""; }catch(e){ detalhe = texto.slice(0,120); }
+    const err = new Error(detalhe || ("HTTP " + r.status));
+    err.status = r.status;
+    throw err;
+  }
+  const j = JSON.parse(texto);
+  const saida = (j.candidates?.[0]?.content?.parts || []).map(x=>x.text || "").join("");
+  const obj = tentarParsearJSON(saida.replace(/```json/g,"").replace(/```/g,""));
+  if(!obj) throw new Error("resposta sem JSON");
+  return obj;
 }
 
 async function chamarGeminiBusca(prompt, maxTokens, usarBusca, aoTentar){
@@ -2051,85 +2187,109 @@ function separarPorCargo(){
 
 /* ---------- 1 chamada por cargo, só com o bloco dele ---------- */
 let _processando = {};
+let _cancelarCargo = false;
+let _timerCargo = null;
+
 async function processarCargo(i){
   if(_processando[i]){ toast("Já estou lendo este cargo…", "info"); return; }
   _processando[i] = true;
+  _cancelarCargo = false;
   try{ return await _processarCargo(i); } finally { delete _processando[i]; }
 }
+
+function _pintarCargo(html){
+  const box = document.getElementById("listaCargos");
+  if(box) box.innerHTML = html;
+}
+function _progressoCargo(txt, seg){
+  const el = document.getElementById("cargo-fase");
+  if(el) el.textContent = txt + (seg ? " · " + seg + "s" : "");
+}
+
 async function _processarCargo(i){
   const c = cargosEncontrados[i];
   if(!c) return;
   const texto = (document.getElementById("edital").value || "").trim();
-  const box = document.getElementById("listaCargos");
-  const msg = document.getElementById("cargo-msg");
   const bloco = blocoDoCargo(texto, c.nome);
 
-  box.innerHTML = `<div class="card" style="padding:11px">
-    <div class="mini">Lendo ${c.nome} (${Math.round(bloco.length/1000)} mil caracteres)...</div>
-    <div class="mini" id="detalhe-cargo">aguarde</div></div>`;
+  _pintarCargo(`<div class="card" style="padding:12px">
+    <div style="font-size:13px;font-weight:800;color:#0A2240">${c.nome}</div>
+    <div class="mini" id="cargo-fase">preparando…</div>
+    <button class="btn sec mini" style="margin-top:8px;width:100%" onclick="cancelarCargo(${i})">
+      Cancelar e ler direto do texto</button>
+  </div>`);
 
   let seg = 0;
-  const cron = setInterval(()=>{
+  clearInterval(_timerCargo);
+  _timerCargo = setInterval(()=>{
     seg++;
-    const el = document.getElementById("detalhe-cargo");
-    if(el) el.textContent = "aguarde " + seg + "s";
+    if(_cancelarCargo) return;
+    _progressoCargo("consultando a IA (máx. 12s)", seg);
   }, 1000);
 
-  let disc = null, erroIA = null;
-  if(db.apiKey){
+  let disc = null, origem = "";
+
+  if(db.apiKey && !_cancelarCargo){
     const prompt = `Abaixo está o conteúdo programático de UM cargo de um concurso público brasileiro.
 Liste todas as disciplinas e, para cada uma, os tópicos.
 Responda APENAS com JSON:
-{"disciplinas":[{"nome":"","topicos":["",""],"questoes":0,"peso":1}]}
-Regras:
-- nomes exatos das disciplinas; TODOS os tópicos numerados; não invente;
-- "questoes" = quantas questões desta disciplina caem na prova (0 se o edital não informar);
-- "peso" = peso/multiplicador que o edital dá à disciplina (1 se não houver).
-
+{"disciplinas":[{"nome":"","topicos":["",""]}]}
+Regras: nomes exatos das disciplinas; TODOS os tópicos numerados; não invente.
 TEXTO:
 ${bloco}`;
     try{
-      const r = await chamarGeminiBusca(prompt, 8192, false);
-      disc = (r.obj.disciplinas || []).filter(d=> d && d.nome && (d.topicos||[]).length)
+      const obj = await chamarUmaVez(prompt, 4096, 12000);
+      disc = (obj.disciplinas || []).filter(d=> d && d.nome && (d.topicos||[]).length)
         .map(d=>({ nome: limparTextoEdital(d.nome), topicos: (d.topicos||[]).map(limparTextoEdital) }));
-      (r.obj.disciplinas || []).forEach(d=>{
-        if(!d || !d.nome) return;
-        const nome = limparTextoEdital(d.nome);
-        if(Number(d.questoes) > 0) definirMeta(nome, "questoes", d.questoes);
-        if(Number(d.peso) > 0) definirMeta(nome, "peso", d.peso);
-      });
-      if(!disc.length) disc = null;
-    }catch(e){ erroIA = e.message; }
+      if(disc && disc.length) origem = "IA";
+      else disc = null;
+    }catch(e){
+      origem = "IA fora (" + (e.status === 429 ? "cota" : e.status === 503 ? "ocupado" : (e.name === "AbortError" ? "tempo" : "erro")) + ")";
+    }
   }
 
-  // reserva: parser local do bloco
+  clearInterval(_timerCargo);
+
   if(!disc){
-    const local = parseEdital(bloco.replace(/\s+([a-záéíóúç]{1,3})\s/g, " "));
-    disc = local.filter(d=> d.topicos.length);
-    if(disc.length && !erroIA) erroIA = "sem chave de IA — usei leitura direta do texto";
+    _progressoCargo("lendo o texto direto…", 0);
+    try{
+      const local = parseEdital(bloco.replace(/\s+([a-záéíóúç]{1,3})\s/g, " "));
+      disc = local.filter(d=> d.topicos && d.topicos.length)
+        .map(d=>({ nome: limparTextoEdital(d.nome), topicos: d.topicos.map(limparTextoEdital) }));
+      if(disc && disc.length) origem = origem ? origem + " — usei o texto" : "texto";
+      else disc = null;
+    }catch(e){ disc = null; }
   }
-
-  clearInterval(cron);
 
   if(!disc || !disc.length){
-    box.innerHTML = `<div class="status err">${erroIA || "não consegui ler este cargo"}</div>
-      <button class="btn sec mini" onclick="processarCargo(${i})">Tentar de novo</button>
-      <button class="btn sec mini" onclick="separarPorCargo()">Voltar à lista</button>`;
+    _pintarCargo(`<div class="card" style="padding:12px">
+      <div class="status err">Não consegui ler este cargo${origem ? " — " + origem : ""}.</div>
+      <button class="btn mini sec" style="width:100%" onclick="processarCargo(${i})">Tentar de novo</button>
+      <button class="btn mini sec" style="width:100%;margin-top:6px" onclick="separarPorCargo()">Voltar à lista</button>
+    </div>`);
+    toast("Falhou ao ler o cargo", "err");
     return;
   }
 
   cargosEncontrados[i].disciplinas = disc;
-  const total = disc.reduce((a,d)=>a+(d.topicos||[]).length,0);
-  box.innerHTML = `<div class="card" style="padding:11px">
-    <div class="status ${erroIA?"info":"ok"}">${disc.length} disciplinas, ${total} tópicos${erroIA?(" — "+erroIA):""}</div>
+  const total = disc.reduce((a,d)=>a+(d.topicos||[]).length, 0);
+  _pintarCargo(`<div class="card" style="padding:12px">
+    <div class="status ok">${disc.length} disciplinas, ${total} tópicos${origem ? " (" + origem + ")" : ""}</div>
     ${disc.map(d=>`<div style="margin-top:7px">
       <b style="font-size:11.5px;color:#0A2240">${d.nome}</b>
       <div style="font-size:11px;color:#5B6B80;line-height:1.45">${(d.topicos||[]).slice(0,12).join(" · ")}${(d.topicos||[]).length>12?" …":""}</div>
     </div>`).join("")}
     <button class="btn principal" style="width:100%;margin-top:10px" onclick="usarCargo(${i})">Usar estas matérias</button>
     <button class="btn sec mini" style="width:100%;margin-top:6px" onclick="processarCargo(${i})">Ler de novo</button>
-  </div>`;
+  </div>`);
   toast(c.nome + ": " + disc.length + " disciplinas", "ok");
+}
+
+function cancelarCargo(i){
+  _cancelarCargo = true;
+  clearInterval(_timerCargo);
+  toast("Cancelado — lendo direto do texto", "info");
+  processarCargo(i);
 }
 
 function usarCargo(i){
@@ -2304,7 +2464,11 @@ function normalizarCiclo(ciclo, alvo){
     const d = [1,2,3,4,5,6].sort((a,b)=>livre(b)-livre(a))[0];
     if(livre(d) < 0.9) break;
     const h = Math.min(1.5, Math.floor(livre(d)*2)/2);
-    const mat = disc[giro % disc.length];
+    // não repetir a mesma matéria no mesmo dia enquanto houver alternativa
+    const jaNoDia = new Set(out[d].map(b=>b.materia));
+    let candidatas = disc.filter(x=> !jaNoDia.has(x.nome));
+    if(!candidatas.length) candidatas = disc;
+    const mat = candidatas[giro % candidatas.length];
     out[d].push({ materia:mat.nome, topico:mat.topicos[giro % Math.max(1,mat.topicos.length)],
                   horas:h });
     giro++; guard++;
@@ -2515,8 +2679,16 @@ function calcularStreak(){
   const dias = new Set(db.sessoes.map(s=>s.data));
   let seq = 0;
   let cursor = hoje();
-  if(!dias.has(cursor)) cursor = maisDias(cursor, -1);   // tolera ainda não ter estudado hoje
-  while(dias.has(cursor)){ seq++; cursor = maisDias(cursor, -1); }
+  // se hoje ainda não teve estudo, começa a contar de ontem
+  if(!dias.has(cursor)) cursor = maisDias(cursor, -1);
+  let guard = 0;
+  while(guard++ < 400){
+    // dia de folga planejada (ou feriado) não quebra a sequência
+    if(!dias.has(cursor) && metaDoDia(cursor) === 0){ cursor = maisDias(cursor, -1); continue; }
+    if(!dias.has(cursor)) break;
+    seq++;
+    cursor = maisDias(cursor, -1);
+  }
   return seq;
 }
 function renderConstancia(){
@@ -2861,7 +3033,7 @@ function wzEscolherFonte(fonte){
     return;
   }
   // sem edital: usa o padrao
-  db.edital = {texto:"", disciplinas: Object.keys(PADRAO).map(n=>({nome:n, topicos:PADRAO[n].slice()})), nome:"Plano padrão"};
+  db.edital = {texto:"", disciplinas: disciplinasPadrao(), nome:"Plano padrão"};
   db.pesos = {};
   db.edital.disciplinas.forEach(d=> db.pesos[d.nome] = Math.max(1, d.topicos.length));
   salvar(); renderPesos(); renderMaterias(); popularSelects();
@@ -3434,8 +3606,16 @@ function atualizarTudo(){
   const dd=new Date(d+"T12:00:00");
   atualizarSino();
   atualizarBase();
+  aplicarModoInicial();
   renderProximaAcao();
-  document.getElementById("cabecalho").textContent=dd.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})+(meta?"":" · descanso");
+  const cab = document.getElementById("cabecalho");
+  if(cab){
+    if(!temConfiguracao()){
+      cab.textContent = "Configure seu plano para começar";
+    } else {
+      cab.textContent = dd.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"}) + (meta?"":" · descanso");
+    }
+  }
   renderConstancia();
   desenharTudo();
 }
